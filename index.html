@@ -443,6 +443,17 @@
                   </button>
                 </div>
 
+<div class="flex gap-2 mt-2">
+  <button id="argusAnalysisBtn" class="btn w-full hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+    <i class="fa-solid fa-chart-line text-violet-300"></i>
+    Análise Técnica
+  </button>
+  <button id="argusAuditBtn" class="btn w-full hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+    <i class="fa-solid fa-clipboard-list text-amber-300"></i>
+    Auditoria
+  </button>
+</div>
+
                 <p class="text-[0.70rem] text-slate-500">
                   O ARGUS não “chuta”. Se a confiança for baixa, ele declara explicitamente.
                 </p>
@@ -2361,6 +2372,426 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
 
 })();
 </script>
+
+<script>
+/* =========================================================
+   ARGUS FASE B (Copiloto) + Auditoria + Painel Analítico
+   - Não altera o motor de decisão: apenas observa snapshots e interações.
+   ========================================================= */
+(function(){
+  const LS_KEY = 'ARGUS_AUDIT_LOG_V1';
+  const MAX_LOGS = 500;
+
+  function safeParse(json, fallback){
+    try { return JSON.parse(json); } catch { return fallback; }
+  }
+
+  function loadLogs(){
+    return safeParse(localStorage.getItem(LS_KEY) || '[]', []);
+  }
+
+  function saveLogs(logs){
+    localStorage.setItem(LS_KEY, JSON.stringify(logs.slice(0, MAX_LOGS)));
+  }
+
+  function pushLog(entry){
+    const logs = loadLogs();
+    logs.unshift(entry);
+    saveLogs(logs);
+    renderAuditList();
+  }
+
+  function getSiteId(){
+    // tenta inferir do contexto atual (sites[currentIndex]) ou seletor
+    const sel = document.getElementById('siteSelect');
+    if (sel && sel.value) return sel.value;
+    if (window.sites && typeof window.currentIndex === 'number' && window.sites[window.currentIndex]) return window.sites[window.currentIndex].id;
+    if (window.SITES && window.SITES[0]) return window.SITES[0].id;
+    return 'SITE-UNKNOWN';
+  }
+
+  // ---- Analytics: calcula deltas/trends/correlations a partir de ARGUS.history ----
+  function computeSlope(arr, n=12){
+    const a = arr.slice(-n);
+    if (a.length < 3) return 0;
+    return (a[a.length-1] - a[0]) / a.length;
+  }
+
+  function pearson(x, y){
+    const n = Math.min(x.length, y.length);
+    if (n < 6) return 0;
+    const xs = x.slice(-n), ys = y.slice(-n);
+    const avgX = xs.reduce((a,b)=>a+b,0)/n;
+    const avgY = ys.reduce((a,b)=>a+b,0)/n;
+    let num=0, denX=0, denY=0;
+    for (let i=0;i<n;i++){
+      num += (xs[i]-avgX)*(ys[i]-avgY);
+      denX += (xs[i]-avgX)**2;
+      denY += (ys[i]-avgY)**2;
+    }
+    return denX && denY ? (num / Math.sqrt(denX*denY)) : 0;
+  }
+
+  function buildAnalyticSnapshot(){
+    const siteId = getSiteId();
+    const h = (window.ARGUS && window.ARGUS.history && window.ARGUS.history[siteId]) ? window.ARGUS.history[siteId] : null;
+    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
+    if (!h || !s) return null;
+
+    const idxNow = h.zinc.length - 1;
+    const idx12 = Math.max(0, idxNow - 12);
+    const idx24 = Math.max(0, idxNow - 24);
+
+    const deltas = {
+      zinc_12: (h.zinc[idxNow] - h.zinc[idx12]) || 0,
+      zinc_24: (h.zinc[idxNow] - h.zinc[idx24]) || 0,
+      steel_12: (h.steel[idxNow] - h.steel[idx12]) || 0,
+      plate_12: (h.plate[idxNow] - h.plate[idx12]) || 0,
+    };
+
+    // Tendências (inclinações)
+    const trends = {
+      zinc_slope: computeSlope(h.zinc, 12),
+      steel_slope: computeSlope(h.steel, 12),
+      plate_slope: computeSlope(h.plate, 12),
+      cu_slope: computeSlope(h.cu, 12),
+    };
+
+    // Correlações simples com ambiente (se disponível via ARGUS.weather.history)
+    const env = (window.ARGUS && window.ARGUS.envHistory && window.ARGUS.envHistory[siteId]) ? window.ARGUS.envHistory[siteId] : null;
+    const corrs = [];
+    if (env && env.humidity && env.humidity.length > 6){
+      const cZH = pearson(h.zinc.slice(-env.humidity.length), env.humidity);
+      if (cZH > 0.65) corrs.push('Zinco × Umidade (forte)');
+      const cSW = env.wind ? pearson(h.steel.slice(-env.wind.length), env.wind) : 0;
+      if (cSW > 0.65) corrs.push('Aço × Vento (forte)');
+    }
+
+    // Drivers (do snapshot já calculado pelo motor)
+    const drivers = (s.reasons && s.reasons.length) ? s.reasons.slice(0,4) : ['Sem drivers dominantes no momento.'];
+
+    // Planos de ação: usa o que estiver no snapshot (se você já injeta), senão sugere de forma controlada
+    const actions = (s.actions && Array.isArray(s.actions) && s.actions.length) ? s.actions : [];
+    const suggested = [];
+    if (!actions.length){
+      // regras conservadoras (não imperativas)
+      if (s.operational_state === 'attention' || s.operational_state === 'critical'){
+        suggested.push({ title:'Avaliar manutenção preventiva', window:'15–30 dias', reason:'Condição em atenção/crítica e tendência positiva de degradação.' });
+      }
+      if (s.env && (s.env.humidity >= 80 || s.env.wind >= 14)){
+        suggested.push({ title:'Recomenda-se inspeção ambiental', window:'72h', reason:'Ambiente agressivo (umidade/vento) pode acelerar corrosão.' });
+      }
+    }
+
+    return {
+      site_id: siteId,
+      timestamp: s.timestamp,
+      state: s.operational_state,
+      score: s.score,
+      confidence: s.confidence,
+      deltas, trends,
+      correlations: corrs,
+      drivers,
+      actions: actions.length ? actions : suggested,
+      env: s.env || null,
+      rul: s.rul || null
+    };
+  }
+
+  // ---- UI: Analysis modal ----
+  function openModal(id){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+  }
+  function closeModal(id){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+  }
+
+  function renderAnalysis(){
+    const a = buildAnalyticSnapshot();
+    if (!a) return;
+
+    const d = document.getElementById('argusAnalysisDeltas');
+    const t = document.getElementById('argusAnalysisTrends');
+    const c = document.getElementById('argusAnalysisCorr');
+    const ul = document.getElementById('argusAnalysisActions');
+
+    if (d) d.innerHTML = `
+      <div>Δ Zinco (12): <b>${a.deltas.zinc_12.toFixed(1)}%</b></div>
+      <div>Δ Zinco (24): <b>${a.deltas.zinc_24.toFixed(1)}%</b></div>
+      <div>Δ Aço (12): <b>${a.deltas.steel_12.toFixed(1)}%</b></div>
+      <div>Δ Placa (12): <b>${a.deltas.plate_12.toFixed(1)}%</b></div>
+      <div class="text-slate-500 mt-1">Confiança: ${a.confidence}</div>
+    `;
+
+    if (t) t.innerHTML = `
+      <div>Slope Zinco: <b>${a.trends.zinc_slope.toFixed(3)}</b></div>
+      <div>Slope Aço: <b>${a.trends.steel_slope.toFixed(3)}</b></div>
+      <div>Slope Placa: <b>${a.trends.plate_slope.toFixed(3)}</b></div>
+      <div>Slope Cu: <b>${a.trends.cu_slope.toFixed(3)}</b></div>
+    `;
+
+    const corrTxt = (a.correlations && a.correlations.length) ? a.correlations.map(x=>`<div>• ${x}</div>`).join('') : '<div>Nenhuma correlação forte detectada.</div>';
+    const drvTxt = (a.drivers||[]).map(x=>`<div>• ${x}</div>`).join('');
+    if (c) c.innerHTML = `
+      <div class="mb-2"><span class="text-slate-400">Drivers:</span></div>
+      ${drvTxt}
+      <div class="mt-3 mb-2"><span class="text-slate-400">Correlações:</span></div>
+      ${corrTxt}
+    `;
+
+    if (ul){
+      ul.innerHTML = '';
+      const arr = (a.actions && a.actions.length) ? a.actions : [];
+      arr.forEach(ac=>{
+        const li = document.createElement('li');
+        li.textContent = `${ac.title} (${ac.window}) — ${ac.reason}`;
+        ul.appendChild(li);
+      });
+      if (!arr.length){
+        const li = document.createElement('li');
+        li.textContent = 'Nenhuma recomendação técnica no momento.';
+        ul.appendChild(li);
+      }
+    }
+  }
+
+  // ---- Auditoria ----
+  function auditSnapshot(){
+    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
+    if (!s) return;
+
+    const entry = {
+      type: 'snapshot',
+      timestamp: new Date().toISOString(),
+      site_id: getSiteId(),
+      argus: {
+        operational_state: s.operational_state,
+        confidence: s.confidence,
+        score: s.score,
+        rul: s.rul || null,
+        reasons: s.reasons || [],
+        anomalies: s.anomalies || []
+      },
+      environment: s.env || null
+    };
+    pushLog(entry);
+  }
+
+  function auditCopilot(intent, question, answer){
+    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
+    pushLog({
+      type: 'copilot',
+      timestamp: new Date().toISOString(),
+      site_id: getSiteId(),
+      intent: intent || 'free_text',
+      question: question || '',
+      answer: answer || '',
+      argus_state: s ? s.operational_state : null,
+      score: s ? s.score : null,
+      confidence: s ? s.confidence : null
+    });
+  }
+
+  function renderAuditList(){
+    const list = document.getElementById('argusAuditList');
+    const count = document.getElementById('argusAuditCount');
+    if (!list) return;
+    const logs = loadLogs();
+    if (count) count.textContent = `${logs.length} eventos`;
+    list.innerHTML = '';
+    logs.slice(0, 120).forEach((e, i)=>{
+      const div = document.createElement('div');
+      div.className = 'p-2 rounded-lg bg-slate-900/40 border border-slate-800';
+      const head = `<div class="flex justify-between"><span class="text-slate-300"><b>${e.type.toUpperCase()}</b> • ${e.site_id}</span><span class="text-slate-500">${new Date(e.timestamp).toLocaleString('pt-BR')}</span></div>`;
+      let body = '';
+      if (e.type === 'snapshot'){
+        body = `<div class="mt-1 text-slate-300">Estado: <b>${e.argus.operational_state}</b> • Score: <b>${e.argus.score}</b> • Confiança: <b>${e.argus.confidence}</b></div>`;
+        if (e.argus.rul && e.argus.rul.recommended_days){
+          body += `<div class="text-slate-400">RUL recomendado: ~${e.argus.rul.recommended_days} dias (${e.argus.rul.ci || '±—'})</div>`;
+        }
+        if (e.argus.reasons && e.argus.reasons.length){
+          body += `<div class="text-slate-400">Drivers: ${e.argus.reasons.slice(0,3).join(' | ')}</div>`;
+        }
+      } else {
+        body = `<div class="mt-1 text-slate-300">Q: ${escapeHtml(e.question).slice(0,180)}</div>
+                <div class="text-slate-400 whitespace-pre-wrap">A: ${escapeHtml(e.answer).slice(0,300)}</div>`;
+      }
+      div.innerHTML = head + body;
+      list.appendChild(div);
+    });
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, (m)=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[m]));
+  }
+
+  function exportLogs(){
+    const logs = loadLogs();
+    const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `towerguard_argus_audit_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function clearLogs(){
+    localStorage.removeItem(LS_KEY);
+    renderAuditList();
+  }
+
+  // ---- Hook: capture snapshots after updateARGUS runs ----
+  // updateARGUS é uma função existente no dashboard; fazemos wrap sem alterar lógica.
+  function wrapUpdate(){
+    if (typeof window.updateARGUS !== 'function') return;
+    if (window.__ARGUS_AUDIT_WRAPPED__) return;
+    window.__ARGUS_AUDIT_WRAPPED__ = true;
+
+    const original = window.updateARGUS;
+    window.updateARGUS = function(){
+      const r = original.apply(this, arguments);
+      // depois da atualização, registramos snapshot (com throttle)
+      const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
+      if (s){
+        const now = Date.now();
+        const last = window.__ARGUS_LAST_AUDIT_TS__ || 0;
+        if (now - last > 60 * 1000){ // 1/min para não inundar
+          window.__ARGUS_LAST_AUDIT_TS__ = now;
+          auditSnapshot();
+        }
+      }
+      return r;
+    };
+  }
+
+  // ---- Hook: capture copilot send ----
+  function wrapCopilotSend(){
+    const sendBtn = document.getElementById('argusSend');
+    const input = document.getElementById('argusInput');
+    if (!sendBtn || !input) return;
+    if (sendBtn.__AUDIT_BOUND__) return;
+    sendBtn.__AUDIT_BOUND__ = true;
+
+    sendBtn.addEventListener('click', () => {
+      const q = input.value || '';
+      // resposta é adicionada pelo copilotReply; pegamos do chat após um pequeno tick
+      setTimeout(() => {
+        const chat = document.getElementById('argusChat');
+        if (!chat) return;
+        const msgs = chat.querySelectorAll('[data-role="assistant"]');
+        const last = msgs[msgs.length-1];
+        const ans = last ? last.textContent : '';
+        auditCopilot('free_text', q, ans);
+      }, 50);
+    });
+  }
+
+  // ---- UI bindings ----
+  function bindUi(){
+    const aBtn = document.getElementById('argusAnalysisBtn');
+    const aClose = document.getElementById('argusAnalysisClose');
+    if (aBtn) aBtn.addEventListener('click', () => { renderAnalysis(); openModal('argusAnalysisModal'); });
+    if (aClose) aClose.addEventListener('click', () => closeModal('argusAnalysisModal'));
+
+    const auBtn = document.getElementById('argusAuditBtn');
+    const auClose = document.getElementById('argusAuditClose');
+    const auExport = document.getElementById('argusAuditExport');
+    const auClear = document.getElementById('argusAuditClear');
+    if (auBtn) auBtn.addEventListener('click', () => { renderAuditList(); openModal('argusAuditModal'); });
+    if (auClose) auClose.addEventListener('click', () => closeModal('argusAuditModal'));
+    if (auExport) auExport.addEventListener('click', exportLogs);
+    if (auClear) auClear.addEventListener('click', clearLogs);
+  }
+
+  // ---- Boot ----
+  document.addEventListener('DOMContentLoaded', () => {
+    bindUi();
+    wrapUpdate();
+    wrapCopilotSend();
+    renderAuditList();
+  });
+})();
+</script>
+
+<!-- ARGUS Analysis Modal -->
+<div id="argusAnalysisModal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-50">
+  <div class="bg-slate-950 border border-slate-700/60 rounded-2xl p-4 w-[720px] max-w-[95vw] space-y-3 shadow-xl">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">ARGUS</p>
+        <h3 class="text-sm font-semibold text-slate-100">Análise Técnica</h3>
+      </div>
+      <button id="argusAnalysisClose" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+        Fechar
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card p-3 space-y-2">
+        <p class="text-xs text-slate-400">Variações (Janela)</p>
+        <div id="argusAnalysisDeltas" class="text-sm text-slate-200 space-y-1"></div>
+      </div>
+      <div class="card p-3 space-y-2">
+        <p class="text-xs text-slate-400">Tendências</p>
+        <div id="argusAnalysisTrends" class="text-sm text-slate-200 space-y-1"></div>
+      </div>
+      <div class="card p-3 space-y-2">
+        <p class="text-xs text-slate-400">Correlações & Drivers</p>
+        <div id="argusAnalysisCorr" class="text-sm text-slate-200 space-y-1"></div>
+      </div>
+      <div class="card p-3 space-y-2">
+        <p class="text-xs text-slate-400">Planos de Ação Sugeridos</p>
+        <ul id="argusAnalysisActions" class="text-sm text-slate-200 space-y-1 list-disc pl-4"></ul>
+      </div>
+    </div>
+
+    <p class="text-[0.70rem] text-slate-500">Recomendações técnicas. Avaliação humana requerida. O Copiloto apenas explica.</p>
+  </div>
+</div>
+
+<!-- ARGUS Audit Modal -->
+<div id="argusAuditModal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-50">
+  <div class="bg-slate-950 border border-slate-700/60 rounded-2xl p-4 w-[860px] max-w-[95vw] space-y-3 shadow-xl">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">ARGUS</p>
+        <h3 class="text-sm font-semibold text-slate-100">Auditoria</h3>
+      </div>
+      <div class="flex gap-2">
+        <button id="argusAuditExport" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+          Exportar JSON
+        </button>
+        <button id="argusAuditClear" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+          Limpar
+        </button>
+        <button id="argusAuditClose" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+          Fechar
+        </button>
+      </div>
+    </div>
+
+    <div class="card p-3 space-y-2">
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-slate-400">Últimos eventos (mais recentes primeiro)</p>
+        <p id="argusAuditCount" class="text-xs text-slate-500">0</p>
+      </div>
+      <div id="argusAuditList" class="max-h-[55vh] overflow-auto text-xs text-slate-200 space-y-2"></div>
+    </div>
+
+    <p class="text-[0.70rem] text-slate-500">Logs locais (demo): armazenados no navegador via localStorage. Em produção, enviar para backend.</p>
+  </div>
+</div>
 
 </body>
 </html>
