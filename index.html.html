@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>TowerGuard Pro – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter','system-ui','-apple-system','Segoe UI','Roboto','Arial','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+
+  <style>
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: #e5e7eb;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+    .card {
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.06), transparent 55%), rgba(15,23,42,0.96);
+      border-radius: 1rem;
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow: 0 20px 40px rgba(15,23,42,0.8);
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 0.15rem 0.7rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .badge-dot {
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 999px;
+    }
+    .pulse {
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(52,211,153,0.4); }
+      70%  { box-shadow: 0 0 0 10px rgba(52,211,153,0); }
+      100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+    }
+    .toast {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      background: rgba(16,185,129,0.12);
+      color: #bbf7d0;
+      border: 1px solid rgba(16,185,129,0.4);
+      padding: 0.8rem 1.3rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .25s ease-out;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .sidebar-item-active {
+      background: linear-gradient(to right, rgba(37,99,235,0.4), transparent);
+      border-color: rgba(96,165,250,0.9);
+      color: #e5e7eb;
+    }
+    .sidebar-item {
+      transition: all .2s ease-out;
+    }
+    .sidebar-item:hover {
+      background-color: rgba(15,23,42,0.85);
+    }
+    .page-section {
+      display: none;
+    }
+    .page-section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body class="dark">
+  <div class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-950/95 border-r border-slate-800 flex flex-col">
+      <!-- Topo com logo -->
+      <div class="px-4 py-4 flex items-center gap-3 border-b border-slate-800">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center shadow-lg shadow-blue-500/40">
+          <i class="fa-solid fa-tower-cell text-xl text-white"></i>
+        </div>
+        <div>
+          <p class="text-[0.60rem] uppercase tracking-[0.30em] text-slate-500">TowerGuard</p>
+          <p class="text-sm font-semibold tracking-tight text-slate-100">
+            Command Center <span class="text-blue-400">Pro</span>
+          </p>
+          <p class="text-[0.65rem] text-slate-500">Enterprise Edition</p>
+        </div>
+      </div>
+
+      <!-- Menu -->
+      <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+        <button data-page-target="dashboard" class="sidebar-item sidebar-item-active w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent text-slate-200 text-left">
+          <i class="fa-solid fa-chart-line text-sky-400 w-5"></i>
+          Dashboard
+        </button>
+        <button data-page-target="reports" class="sidebar-item w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent text-slate-300 text-left">
+          <i class="fa-solid fa-file-lines text-emerald-400 w-5"></i>
+          Relatórios
+        </button>
+        <button data-page-target="register" class="sidebar-item w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent text-slate-300 text-left">
+          <i class="fa-solid fa-plus-circle text-blue-300 w-5"></i>
+          Cadastro de Sites
+        </button>
+        <button data-page-target="map" class="sidebar-item w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent text-slate-300 text-left">
+          <i class="fa-solid fa-location-dot text-amber-300 w-5"></i>
+          Mapa
+        </button>
+      </nav>
+
+      <!-- Usuário + Sair -->
+      <div class="px-3 py-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[0.7rem] text-slate-200">
+            AA
+          </div>
+          <div>
+            <p class="font-semibold text-slate-200 text-[0.78rem]">Abner Albert</p>
+            <p class="text-[0.65rem] text-slate-500">Operador NOC</p>
+          </div>
+        </div>
+        <button id="btnLogout" class="chip bg-red-900/40 border border-red-500/50 text-red-300 flex items-center gap-1">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 flex flex-col">
+      <!-- HEADER -->
+      <header class="h-16 px-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 backdrop-blur">
+        <div class="flex items-center gap-4">
+          <div>
+            <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Site Monitorado</p>
+            <div class="flex items-center gap-2">
+              <select id="siteSelect" class="bg-slate-900/90 border border-slate-700 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"></select>
+              <span id="siteIsoBadge" class="chip bg-slate-900/80 border border-slate-700 text-slate-300 flex items-center gap-1">
+                <span class="badge-dot bg-blue-500"></span>
+                <span id="isoText">ISO 9223</span>
+              </span>
+            </div>
+          </div>
+
+          <div id="connBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/50 text-xs text-emerald-300">
+            <span class="badge-dot bg-emerald-400 pulse"></span>
+            <span id="connText">Gateway Online</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs text-slate-400">
+          <div class="hidden md:flex items-center gap-2">
+            <i class="fa-solid fa-clock text-slate-500"></i>
+            <span id="clockLabel">--:--:--</span>
+          </div>
+
+          <div class="hidden md:flex items-center gap-2">
+            <span class="text-[0.70rem] text-slate-500">Cenário:</span>
+            <select id="scenarioSelect" class="bg-slate-900/90 border border-slate-700 text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <option value="default">Padrão</option>
+              <option value="coastal">Costeiro Severo</option>
+              <option value="urban">Urbano Costeiro</option>
+              <option value="inland">Interior Seco</option>
+            </select>
+          </div>
+
+          <button id="btnSim" class="px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-xs font-semibold shadow shadow-blue-500/40">
+            Iniciar Simulação
+          </button>
+          <button id="btnPresent" class="px-3 py-1.5 rounded-full bg-amber-500/90 hover:bg-amber-400 text-xs font-semibold text-slate-900">
+            Modo Executivo
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="flex-1 overflow-auto bg-slate-950/80 p-5 space-y-4">
+
+        <!-- PAGE: DASHBOARD -->
+        <section id="page-dashboard" class="page-section active space-y-4">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <!-- Col 1 -->
+            <div class="xl:col-span-2 space-y-4">
+              <div class="card p-4">
+                <div class="flex flex-wrap justify-between gap-4 items-center">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Resumo do Site</p>
+                    <h2 id="siteTitle" class="text-lg font-semibold text-slate-100">--</h2>
+                    <p id="siteSubtitle" class="text-xs text-slate-400">--</p>
+                  </div>
+                  <div class="flex gap-6 xl:gap-10">
+                    <div class="text-right">
+                      <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Categoria ISO 9223</p>
+                      <p id="isoLabel" class="text-2xl font-bold text-blue-400">--</p>
+                      <p class="text-[0.70rem] text-slate-500">Ambiente de corrosividade</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Vida Útil Prot. Zinco</p>
+                      <p id="rulLabel" class="text-2xl font-bold text-emerald-400">--</p>
+                      <p class="text-[0.70rem] text-slate-500">Estimativa até limite crítico</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Índice de Integridade</p>
+                      <p id="iisLabel" class="text-2xl font-bold text-violet-400">--/100</p>
+                      <p class="text-[0.70rem] text-slate-500">Composto (Zinco, Aço, ambiente)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Widgets de região / clima -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                  <div class="bg-slate-900/80 rounded-xl p-3 text-xs">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Região</p>
+                    <p id="regionLabel" class="text-sm font-semibold text-slate-100">--</p>
+                  </div>
+                  <div class="bg-slate-900/80 rounded-xl p-3 text-xs">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Umidade do ar</p>
+                    <p id="humidityLabel" class="text-sm font-semibold text-sky-300">--%</p>
+                  </div>
+                  <div class="bg-slate-900/80 rounded-xl p-3 text-xs">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Vento</p>
+                    <p id="windLabel" class="text-sm font-semibold text-emerald-300">-- km/h</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                  <!-- Sensor Cu -->
+                  <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-700/70">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Sensor Sacrificial (Cobre)</p>
+                    <p id="cuValueLabel" class="text-xl font-bold text-sky-400 mb-1">-- mV</p>
+                    <div class="grid grid-cols-2 gap-2 text-[0.70rem] text-slate-300">
+                      <div>
+                        <p class="text-slate-400">Bateria</p>
+                        <p><span id="cuBatteryLabel" class="text-emerald-400">--%</span></p>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                          <div id="cuBatteryBar" class="h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-lime-300" style="width:0%"></div>
+                        </div>
+                        <p id="cuBatteryLife" class="text-[0.65rem] text-slate-500 mt-1">-- dias restantes</p>
+                      </div>
+                      <div>
+                        <p class="text-slate-400">Dano da Placa</p>
+                        <p><span id="cuDamageLabel" class="text-amber-300">--%</span></p>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                          <div id="cuDamageBar" class="h-1.5 rounded-full bg-gradient-to-r from-amber-400 to-red-500" style="width:0%"></div>
+                        </div>
+                        <p id="cuDamageLife" class="text-[0.65rem] text-slate-500 mt-1">Vida restante: --%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Zinco -->
+                  <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-700/70">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Proteção (Zinco)</p>
+                    <p class="text-xl font-bold">
+                      <span id="zincLevelLabel" class="text-emerald-400">--%</span>
+                    </p>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                      <div id="zincBar" class="h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-lime-400" style="width:0%"></div>
+                    </div>
+                    <p class="text-[0.70rem] text-slate-500 mt-1">
+                      Limite crítico: <span class="text-emerald-300">100%</span>
+                    </p>
+                  </div>
+
+                  <!-- Aço -->
+                  <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-700/70">
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Dano em Estrutura (Aço)</p>
+                    <p class="text-xl font-bold">
+                      <span id="steelLevelLabel" class="text-amber-300">--%</span>
+                    </p>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                      <div id="steelBar" class="h-1.5 rounded-full bg-gradient-to-r from-amber-400 to-red-500" style="width:0%"></div>
+                    </div>
+                    <p class="text-[0.70rem] text-slate-500 mt-1">
+                      Limite de alerta: <span class="text-orange-300">30%</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gráfico -->
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Histórico</p>
+                    <h3 class="text-sm font-semibold text-slate-100">Tendência de Corrosão (simulação)</h3>
+                  </div>
+                  <div class="flex gap-2 text-[0.65rem] text-slate-400">
+                    <span class="inline-flex items-center gap-1">
+                      <span class="w-3 h-0.5 bg-sky-400 inline-block"></span>Cu
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                      <span class="w-3 h-0.5 bg-emerald-400 inline-block"></span>Zinco
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                      <span class="w-3 h-0.5 bg-orange-400 inline-block"></span>Aço
+                    </span>
+                  </div>
+                </div>
+                <div class="h-64">
+                  <canvas id="mainChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Col 2 -->
+            <div class="space-y-4">
+              <!-- Ranking -->
+              <div class="card p-4 h-[230px] flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500">Parque Monitorado</p>
+                    <h3 class="text-sm font-semibold text-slate-100">Ranking de Risco</h3>
+                  </div>
+                  <span class="chip bg-slate-900/80 border border-slate-600/60 text-slate-300 flex items-center gap-1">
+                    <i class="fa-solid fa-fire-flame-curved text-orange-400"></i>Prioridade
+                  </span>
+                </div>
+                <div class="flex-1 overflow-auto">
+                  <table class="w-full text-xs text-slate-300">
+                    <thead class="text-[0.65rem] uppercase tracking-[0.12em] text-slate-500 border-b border-slate-800">
+                      <tr>
+                        <th class="py-1 text-left">Site</th>
+                        <th class="py-1 text-right">Zinco</th>
+                        <th class="py-1 text-right">Aço</th>
+                        <th class="py-1 text-right">Risco</th>
+                      </tr>
+                    </thead>
+                    <tbody id="riskTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Timeline de eventos -->
+              <div class="card p-4 h-[180px] flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500">Eventos Recentes</p>
+                    <h3 class="text-sm font-semibold text-slate-100">Timeline Operacional</h3>
+                  </div>
+                  <span class="chip bg-slate-900/80 border border-slate-700 text-slate-300 flex items-center gap-1">
+                    <i class="fa-solid fa-stream text-sky-400"></i>Log
+                  </span>
+                </div>
+                <div id="timelineList" class="flex-1 overflow-auto text-xs text-slate-300"></div>
+              </div>
+
+
+              <!-- ARGUS -->
+              <div class="card p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Decision Engine</p>
+                    <h3 class="text-sm font-semibold text-slate-100">ARGUS</h3>
+                  </div>
+                  <div id="argusStateBadge" class="chip bg-emerald-900/30 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
+                    <span id="argusDot" class="badge-dot bg-emerald-400"></span><span id="argusStateText">STABLE</span>
+                  </div>
+                </div>
+
+                <p id="argusHeadline" class="text-xs text-slate-200">
+                  Operação estável. Nenhuma anomalia relevante detectada.
+                </p>
+
+                <div class="text-xs text-slate-300 space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Condições ambientais</span>
+                    <span id="argusEnvImpact" class="text-slate-200">impacto normal</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2 text-[0.70rem]">
+                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
+                      <div class="text-slate-500">Umidade</div>
+                      <div class="font-semibold text-slate-100"><span id="argusHum">--</span>%</div>
+                    </div>
+                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
+                      <div class="text-slate-500">Vento</div>
+                      <div class="font-semibold text-slate-100"><span id="argusWind">--</span> km/h</div>
+                    </div>
+                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
+                      <div class="text-slate-500">Temp</div>
+                      <div class="font-semibold text-slate-100"><span id="argusTemp">--</span>°C</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-slate-900/35 border border-slate-700/40 p-3">
+                  <div class="flex items-center justify-between text-[0.70rem]">
+                    <span class="text-slate-400">Recomendação</span>
+                    <span id="argusConfidence" class="text-slate-200">Confiança: Alta</span>
+                  </div>
+                  <div class="mt-1 text-xs text-slate-200" id="argusRulLine">Intervenção recomendada em ~— dias (±—).</div>
+                  <ul id="argusReasons" class="mt-2 space-y-1 text-[0.72rem] text-slate-300 list-disc pl-4">
+                    <li>Sem fatores dominantes no momento.</li>
+                  </ul>
+                </div>
+
+                <div class="flex gap-2">
+                  <button id="argusCopilotBtn" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+                    <i class="fa-solid fa-wand-magic-sparkles text-sky-400"></i>
+                    Abrir Copiloto
+                  </button>
+                  <button id="argusWeatherBtn" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+                    <i class="fa-solid fa-cloud-sun text-emerald-300"></i>
+                    Clima Real
+                  </button>
+                </div>
+
+                <p class="text-[0.70rem] text-slate-500">
+                  O ARGUS não “chuta”. Se a confiança for baixa, ele declara explicitamente.
+                </p>
+              </div>
+
+              <!-- Manutenção -->
+              <div class="card p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Ação Recomendada</p>
+                    <h3 class="text-sm font-semibold text-slate-100">Janela de Manutenção Preditiva</h3>
+                  </div>
+                  <div id="maintBadge" class="chip bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
+                    <span class="badge-dot bg-emerald-400"></span>Saudável
+                  </div>
+                </div>
+                <p id="maintText" class="text-xs text-slate-300">
+                  Nenhum limite crítico atingido para o site atual. Sistema em monitoramento contínuo.
+                </p>
+
+                <div class="mt-1 text-[0.70rem] text-slate-300 space-y-1">
+                  <p class="text-slate-400 font-semibold">Tempo Estimado até Falha (simulação)</p>
+                  <p>Sensor Cu: <span id="tefCu" class="text-sky-300">--</span></p>
+                  <p>Proteção Zinco: <span id="tefZinc" class="text-emerald-300">--</span></p>
+                  <p>Estrutura Aço: <span id="tefSteel" class="text-orange-300">--</span></p>
+                </div>
+
+                <button id="btnMaint" class="w-full mt-1 flex items-center justify-center gap-2 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-800 border border-slate-600/70 text-slate-100 hover:bg-red-600 hover:border-red-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                  <i class="fa-solid fa-screwdriver-wrench"></i>
+                  Acionar Manutenção
+                </button>
+                <p class="text-[0.65rem] text-slate-500">
+                  Botão habilitado automaticamente quando o <span class="text-emerald-300">Zinco atinge o limite crítico</span> ou o
+                  <span class="text-orange-300">dano em Aço ultrapassa o limite de alerta</span>.
+                </p>
+              </div>
+
+              <!-- Gateway -->
+              <div class="card p-4 space-y-2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Gateway Solar 4G</p>
+                    <h3 class="text-sm font-semibold text-slate-100">Status do Campo</h3>
+                  </div>
+                  <div id="gwStatusPill" class="chip bg-emerald-900/40 border border-emerald-500/60 text-emerald-300 flex items-center gap-1">
+                    <span class="badge-dot bg-emerald-400 pulse"></span>Online
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-xs text-slate-300">
+                  <div>
+                    <p class="text-slate-400">Sinal LoRaWAN</p>
+                    <p id="gwSignalLabel" class="font-semibold text-sky-300">-- dBm</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-400">Bateria Gateway</p>
+                    <p id="gwBatteryLabel" class="font-semibold text-emerald-300">--%</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-400">Última Comunicação</p>
+                    <p id="gwLastSeen" class="font-semibold text-slate-200">agora</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custo evitado -->
+              <div class="card p-4 space-y-2">
+                <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Impacto Financeiro Estimado</p>
+                <div class="flex items-end justify-between">
+                  <div>
+                    <p class="text-xs text-slate-400">Custos de falhas evitados (simulação)</p>
+                    <p id="costLabel" class="text-xl font-bold text-emerald-400">R$ 0</p>
+                  </div>
+                  <div class="w-28 h-2 bg-slate-900 rounded-full overflow-hidden">
+                    <div id="costBar" class="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-amber-400" style="width:0%"></div>
+                  </div>
+                </div>
+                <p class="text-[0.65rem] text-slate-500">
+                  Estimativa baseada em inspeções evitadas e substituições de estrutura não realizadas (modelo fictício para uso acadêmico).
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGE: RELATÓRIOS -->
+        <section id="page-reports" class="page-section space-y-4">
+          <div class="card p-4">
+            <h2 class="text-lg font-semibold mb-1">Relatórios Operacionais</h2>
+            <p class="text-sm text-slate-400 mb-4">
+              Gere relatórios em PDF ou exporte dados em CSV com base no site e na simulação atual.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button id="btnPdf" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i>
+                Gerar PDF (Resumo do Site)
+              </button>
+              <button id="btnCsv" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-file-csv"></i>
+                Exportar CSV (Simulação)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGE: CADASTRO -->
+        <section id="page-register" class="page-section space-y-4">
+          <div class="card p-4 max-w-xl">
+            <h2 class="text-lg font-semibold mb-1">Cadastro de Novo Site</h2>
+            <p class="text-sm text-slate-400 mb-4">
+              Adicione um novo local ao parque monitorado. Os dados são usados apenas na simulação local (não há backend real).
+            </p>
+            <form id="formRegister" class="space-y-3 text-sm">
+              <div>
+                <label class="block text-slate-300 mb-1">ID do Site</label>
+                <input id="newId" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="EV-XX-00" required />
+              </div>
+              <div>
+                <label class="block text-slate-300 mb-1">Nome</label>
+                <input id="newName" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Descrição do local" required />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-300 mb-1">Distância da orla (km)</label>
+                  <input id="newDist" type="number" step="0.1" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="0.5" required />
+                </div>
+                <div>
+                  <label class="block text-slate-300 mb-1">Fator ambiente (ISO)</label>
+                  <input id="newFactor" type="number" step="0.1" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="1.5" required />
+                </div>
+              </div>
+              <button type="submit" class="mt-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-save"></i>
+                Salvar Site
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- PAGE: MAPA (conceitual) -->
+        <section id="page-map" class="page-section space-y-4">
+          <div class="card p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div>
+                <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500">Localização do Ativo</p>
+                <h2 class="text-lg font-semibold text-slate-100">Mapa Operacional (conceitual)</h2>
+              </div>
+              <span class="chip bg-slate-900/80 border border-slate-700 text-slate-300 flex items-center gap-1">
+                <i class="fa-solid fa-location-dot text-amber-300"></i>
+                Mapa
+              </span>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4 mt-2">
+              <!-- Área visual do mapa (mock) -->
+              <div class="md:col-span-2 rounded-xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-700 flex items-center justify-center">
+                <div class="text-center text-slate-400 text-sm px-4 py-8">
+                  <i class="fa-solid fa-map-location-dot text-3xl text-blue-400 mb-3"></i>
+                  <p>Visualização conceitual do site selecionado.</p>
+                  <p class="text-[0.70rem] text-slate-500 mt-1">
+                    Em produção, aqui integraríamos com Google Maps / Leaflet usando as coordenadas reais do ativo.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Detalhes do ativo -->
+              <div class="space-y-3 text-xs text-slate-300">
+                <div>
+                  <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Ativo</p>
+                  <p id="mapSite" class="text-sm font-semibold text-slate-100">--</p>
+                </div>
+                <div>
+                  <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Endereço (referência)</p>
+                  <p id="mapAddress" class="text-[0.80rem] text-slate-300">--</p>
+                </div>
+                <div>
+                  <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Região</p>
+                  <p id="mapRegion" class="text-[0.80rem] text-slate-300">--</p>
+                </div>
+                <div>
+                  <p class="text-[0.65rem] uppercase tracking-[0.20em] text-slate-500 mb-1">Condições Ambientais</p>
+                  <p id="mapEnv" class="text-[0.80rem] text-slate-300">--</p>
+                </div>
+                <div id="mapSummary" class="mt-2 grid gap-2 text-[0.78rem]"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">OK</span>
+  </div>
+
+  <script>
+    const sites = [
+      {
+        id: 'EV-BA-01',
+        name: 'Salvador – Orla Atlântica',
+        distKm: 0.2,
+        envFactor: 1.7,
+        region: 'NE',
+        city: 'Salvador/BA',
+        address: 'Orla Atlântica – Ponto Técnico 01',
+        humidity: 78,
+        wind: 16,
+        sensorCu: 15,
+        battery: 92,
+        plateDamage: 18,
+        zinc: 25,
+        steel: 0,
+        costSaved: 5,
+        gwBattery: 97,
+        gwSignal: -80
+      },
+      {
+        id: 'EV-RJ-04',
+        name: 'Rio de Janeiro – Litoral Sul',
+        distKm: 0.5,
+        envFactor: 1.6,
+        region: 'SE',
+        city: 'Rio de Janeiro/RJ',
+        address: 'Zona Sul – Ponto Técnico 04',
+        humidity: 75,
+        wind: 18,
+        sensorCu: 18,
+        battery: 88,
+        plateDamage: 22,
+        zinc: 30,
+        steel: 2,
+        costSaved: 8,
+        gwBattery: 94,
+        gwSignal: -78
+      },
+      {
+        id: 'EV-PE-08',
+        name: 'Recife – Boa Viagem',
+        distKm: 0.3,
+        envFactor: 1.5,
+        region: 'NE',
+        city: 'Recife/PE',
+        address: 'Boa Viagem – Ponto Técnico 08',
+        humidity: 82,
+        wind: 15,
+        sensorCu: 12,
+        battery: 95,
+        plateDamage: 10,
+        zinc: 20,
+        steel: 0,
+        costSaved: 3,
+        gwBattery: 99,
+        gwSignal: -79
+      }
+    ];
+
+    const THRESHOLDS = {
+      zincCritical: 100,
+      zincAttention: 70,
+      steelCritical: 30,
+      steelAttention: 15
+    };
+
+    const RISK_LEVELS = {
+      moderate: 60,
+      high: 90,
+      critical: 130
+    };
+
+    const SCENARIOS = {
+      default: {
+        label: 'Padrão',
+        corrosionMultiplier: 1.0,
+        humidityDrift: 0,
+        windDrift: 0
+      },
+      coastal: {
+        label: 'Costeiro Severo',
+        corrosionMultiplier: 1.6,
+        humidityDrift: 4,
+        windDrift: 3
+      },
+      urban: {
+        label: 'Urbano Costeiro',
+        corrosionMultiplier: 1.2,
+        humidityDrift: 2,
+        windDrift: 1
+      },
+      inland: {
+        label: 'Interior Seco',
+        corrosionMultiplier: 0.7,
+        humidityDrift: -4,
+        windDrift: -1
+      }
+    };
+
+    let currentScenario = 'default';
+    let currentIndex = 0;
+    let mainChart = null;
+    let simInterval = null;
+    let eventTimeline = [];
+    const MAX_EVENTS = 15;
+    let stepsCounter = 0;
+    let lastGwSeenSeconds = 0;
+
+    function isoCategory(f) {
+      if (f >= 1.6) return 'C5-M (Muito Alta)';
+      if (f >= 1.3) return 'C4 (Alta)';
+      if (f >= 1.0) return 'C3 (Média)';
+      return 'C2 (Moderada)';
+    }
+
+    function calcIIS(site) {
+      const zincImpact = Math.min(site.zinc, 120) / 120;
+      const steelImpact = site.steel / 100;
+      const envImpact = site.envFactor / 2;
+      const plateImpact = site.plateDamage / 100;
+      let score = 100 - (zincImpact * 35 + steelImpact * 40 + envImpact * 15 + plateImpact * 10);
+      if (score < 0) score = 0;
+      if (score > 100) score = 100;
+      return score;
+    }
+
+    function formatBRL(thousands) {
+      const v = thousands * 1000;
+      return v.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 0
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      const span = document.getElementById('toastMsg');
+      span.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function addEvent(level, title, desc) {
+      const now = new Date();
+      const ts = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      eventTimeline.unshift({ ts, level, title, desc });
+      if (eventTimeline.length > MAX_EVENTS) {
+        eventTimeline.pop();
+      }
+      renderTimeline();
+    }
+
+    function renderTimeline() {
+      const container = document.getElementById('timelineList');
+      if (!container) return;
+      container.innerHTML = '';
+      eventTimeline.forEach(ev => {
+        let colorClass = 'text-slate-200';
+        if (ev.level === 'info') colorClass = 'text-sky-300';
+        else if (ev.level === 'warn') colorClass = 'text-amber-300';
+        else if (ev.level === 'critical') colorClass = 'text-red-400';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-start gap-2 mb-1.5';
+        wrapper.innerHTML =
+          '<span class="text-[0.65rem] text-slate-500 w-10 shrink-0">' + ev.ts + '</span>' +
+          '<div class="flex-1">' +
+            '<p class="text-[0.75rem] ' + colorClass + '">' + ev.title + '</p>' +
+            '<p class="text-[0.70rem] text-slate-400">' + ev.desc + '</p>' +
+          '</div>';
+        container.appendChild(wrapper);
+      });
+    }
+
+    function updateEnvWidgets(site) {
+      document.getElementById('regionLabel').textContent =
+        site.region + ' • ' + site.city;
+      document.getElementById('humidityLabel').textContent =
+        site.humidity.toFixed(0) + '%';
+      document.getElementById('windLabel').textContent =
+        site.wind.toFixed(1) + ' km/h';
+
+      document.getElementById('mapSite').textContent =
+        site.id + ' — ' + site.name;
+      document.getElementById('mapAddress').textContent = site.address;
+      document.getElementById('mapRegion').textContent =
+        site.region + ' • ' + site.city;
+      document.getElementById('mapEnv').textContent =
+        'Umidade ' + site.humidity.toFixed(0) +
+        '% • Vento ' + site.wind.toFixed(1) + ' km/h';
+    }
+
+    function updateHeader(site) {
+      document.getElementById('siteTitle').textContent = site.id + ' — ' + site.name;
+      document.getElementById('siteSubtitle').textContent =
+        site.distKm.toFixed(1) + ' km da orla • Fator ' + site.envFactor.toFixed(2) + 'x';
+      const iso = isoCategory(site.envFactor);
+      document.getElementById('isoLabel').textContent = iso;
+      document.getElementById('isoText').textContent = iso;
+      const remaining = Math.max(0, THRESHOLDS.zincCritical - site.zinc);
+      const days = Math.round(remaining * (site.envFactor > 1 ? 1.2 : 1.6));
+      document.getElementById('rulLabel').textContent = days + ' dias';
+
+      const iis = calcIIS(site);
+      const iisLabel = document.getElementById('iisLabel');
+      iisLabel.textContent = iis.toFixed(0) + '/100';
+      if (iis >= 80) {
+        iisLabel.className = 'text-2xl font-bold text-emerald-400';
+      } else if (iis >= 50) {
+        iisLabel.className = 'text-2xl font-bold text-amber-300';
+      } else {
+        iisLabel.className = 'text-2xl font-bold text-red-400';
+      }
+
+      updateEnvWidgets(site);
+      updateMapSummary();
+    }
+
+    function updateTEF(site) {
+      const sc = SCENARIOS[currentScenario] || SCENARIOS.default;
+      const factor = site.envFactor * sc.corrosionMultiplier;
+
+      function formatDays(d) {
+        if (d <= 1) return '≤ 1 dia';
+        if (d < 60) return Math.round(d) + ' dias';
+        const months = d / 30;
+        return months.toFixed(1).replace('.', ',') + ' meses';
+      }
+
+      const rateCu = Math.max(0.1, factor * 0.8);
+      const rateZinc = Math.max(0.1, factor * 0.6);
+      const rateSteel = Math.max(0.05, factor * 0.18);
+
+      const dCu = site.plateDamage >= 100 ? 0 : (100 - site.plateDamage) / rateCu;
+      const dZn = site.zinc >= THRESHOLDS.zincCritical ? 0 : (THRESHOLDS.zincCritical - site.zinc) / rateZinc;
+      const targetSteel = THRESHOLDS.steelCritical;
+      const dSt = site.steel >= targetSteel ? 0 : (targetSteel - site.steel) / rateSteel;
+
+      document.getElementById('tefCu').textContent = formatDays(dCu);
+      document.getElementById('tefZinc').textContent = formatDays(dZn);
+      document.getElementById('tefSteel').textContent = formatDays(dSt);
+    }
+
+    function updateGatewayCard(site) {
+      const statusPill = document.getElementById('gwStatusPill');
+      const signalEl = document.getElementById('gwSignalLabel');
+      const battEl = document.getElementById('gwBatteryLabel');
+      const lastSeenEl = document.getElementById('gwLastSeen');
+
+      signalEl.textContent = site.gwSignal.toFixed(0) + ' dBm';
+      battEl.textContent = site.gwBattery.toFixed(0) + '%';
+
+      if (lastGwSeenSeconds < 30) {
+        statusPill.className = 'chip bg-emerald-900/40 border border-emerald-500/60 text-emerald-300 flex items-center gap-1';
+        statusPill.innerHTML = '<span class="badge-dot bg-emerald-400 pulse"></span>Online';
+        lastSeenEl.textContent = 'há poucos segundos';
+      } else if (lastGwSeenSeconds < 180) {
+        statusPill.className = 'chip bg-amber-900/40 border border-amber-400/60 text-amber-200 flex items-center gap-1';
+        statusPill.innerHTML = '<span class="badge-dot bg-amber-400"></span>Intermitente';
+        lastSeenEl.textContent = 'há ' + Math.round(lastGwSeenSeconds / 60) + ' min';
+      } else {
+        statusPill.className = 'chip bg-red-900/40 border border-red-500/60 text-red-300 flex items-center gap-1';
+        statusPill.innerHTML = '<span class="badge-dot bg-red-500"></span>Offline';
+        lastSeenEl.textContent = 'há ' + Math.round(lastGwSeenSeconds / 60) + ' min';
+      }
+    }
+
+    function updateSensorCards(site) {
+      document.getElementById('cuValueLabel').textContent = site.sensorCu.toFixed(2) + ' mV';
+      document.getElementById('cuBatteryLabel').textContent = site.battery.toFixed(0) + '%';
+      document.getElementById('cuBatteryBar').style.width = Math.min(100, site.battery) + '%';
+      const days = Math.max(1, Math.round(site.battery * 0.4));
+      document.getElementById('cuBatteryLife').textContent = '~ ' + days + ' dias restantes';
+
+      document.getElementById('cuDamageLabel').textContent = site.plateDamage.toFixed(1) + '%';
+      document.getElementById('cuDamageBar').style.width = Math.min(100, site.plateDamage) + '%';
+      const remainingLife = Math.max(0, 100 - site.plateDamage);
+      document.getElementById('cuDamageLife').textContent = 'Vida restante: ' + remainingLife.toFixed(0) + '%';
+
+      document.getElementById('zincLevelLabel').textContent = site.zinc.toFixed(1) + '%';
+      document.getElementById('zincBar').style.width = Math.min(100, site.zinc) + '%';
+
+      document.getElementById('steelLevelLabel').textContent = site.steel.toFixed(1) + '%';
+      const steelRatio = Math.min(100, (site.steel / THRESHOLDS.steelCritical) * 100);
+      document.getElementById('steelBar').style.width = steelRatio + '%';
+
+      document.getElementById('costLabel').textContent = formatBRL(site.costSaved);
+      document.getElementById('costBar').style.width = Math.min(100, site.costSaved * 3) + '%';
+
+      updateMaintenance(site);
+      updateTEF(site);
+      updateGatewayCard(site);
+    }
+
+    function updateMaintenance(site) {
+      const badge = document.getElementById('maintBadge');
+      const text = document.getElementById('maintText');
+      const btn = document.getElementById('btnMaint');
+
+      const zincCritical = site.zinc >= THRESHOLDS.zincCritical;
+      const steelCritical = site.steel >= THRESHOLDS.steelCritical;
+
+      if (zincCritical || steelCritical) {
+        badge.className = 'chip bg-red-900/50 border border-red-500/60 text-red-300 flex items-center gap-1';
+        badge.innerHTML = '<span class="badge-dot bg-red-500 pulse"></span>Crítico';
+        text.textContent = 'Recomenda-se intervenção imediata: proteção de zinco esgotada e/ou dano estrutural elevado.';
+        btn.disabled = false;
+      } else if (site.zinc >= THRESHOLDS.zincAttention || site.steel >= THRESHOLDS.steelAttention) {
+        badge.className = 'chip bg-amber-900/40 border border-amber-400/70 text-amber-200 flex items-center gap-1';
+        badge.innerHTML = '<span class="badge-dot bg-amber-400"></span>Atenção';
+        text.textContent = 'Janela ideal para programar manutenção preventiva antes do limite crítico.';
+        btn.disabled = false;
+      } else {
+        badge.className = 'chip bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-1';
+        badge.innerHTML = '<span class="badge-dot bg-emerald-400 pulse"></span>Saudável';
+        text.textContent = 'Nenhum limite crítico atingido para o site atual. Sistema em monitoramento contínuo.';
+        btn.disabled = true;
+      }
+    }
+
+    function riskScore(site) {
+      return site.zinc * 0.7 + site.steel * 1.4 + site.envFactor * 10 + site.plateDamage * 0.5;
+    }
+
+    function refreshRiskTable() {
+      const body = document.getElementById('riskTableBody');
+      body.innerHTML = '';
+      const sorted = [].concat(sites).sort(function(a, b) {
+        return riskScore(b) - riskScore(a);
+      });
+      sorted.forEach(function(s) {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-800/60 last:border-0';
+        const r = riskScore(s);
+        let tag = 'Baixo';
+        let cls = 'text-emerald-400';
+        if (r > RISK_LEVELS.critical) { tag = 'Crítico'; cls = 'text-red-400'; }
+        else if (r > RISK_LEVELS.high) { tag = 'Alto'; cls = 'text-orange-400'; }
+        else if (r > RISK_LEVELS.moderate) { tag = 'Moderado'; cls = 'text-yellow-300'; }
+
+        tr.innerHTML =
+          '<td class="py-1 text-left text-[0.72rem]">' +
+            '<span class="font-semibold mr-1 text-slate-100">' + s.id + '</span>' +
+            '<span class="text-slate-400">' + s.name.split('–')[0].trim() + '</span>' +
+          '</td>' +
+          '<td class="py-1 text-right text-[0.72rem]">' + s.zinc.toFixed(1) + '%</td>' +
+          '<td class="py-1 text-right text-[0.72rem]">' + s.steel.toFixed(1) + '%</td>' +
+          '<td class="py-1 text-right text-[0.72rem]">' +
+            '<span class="' + cls + ' font-semibold">' + tag + '</span>' +
+          '</td>';
+        body.appendChild(tr);
+      });
+      updateMapSummary();
+    }
+
+    function updateMapSummary() {
+      const container = document.getElementById('mapSummary');
+      if (!container) return;
+
+      const riskCounts = { 'Baixo': 0, 'Moderado': 0, 'Alto': 0, 'Crítico': 0 };
+      const regionCounts = {};
+
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const score = riskScore(s);
+        let tag = 'Baixo';
+        if (score > RISK_LEVELS.critical) tag = 'Crítico';
+        else if (score > RISK_LEVELS.high) tag = 'Alto';
+        else if (score > RISK_LEVELS.moderate) tag = 'Moderado';
+        riskCounts[tag] = (riskCounts[tag] || 0) + 1;
+        regionCounts[s.region] = (regionCounts[s.region] || 0) + 1;
+      }
+
+      let regionHtml = '';
+      for (const key in regionCounts) {
+        if (Object.prototype.hasOwnProperty.call(regionCounts, key)) {
+          regionHtml += '<p><span class="text-sky-300 font-semibold">' + key + ':</span> ' +
+                        regionCounts[key] + ' site(s)</p>';
+        }
+      }
+
+      container.innerHTML =
+        '<div class="bg-slate-900/80 rounded-lg p-3 border border-slate-700/70">' +
+          '<p class="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500 mb-1">Distribuição por risco</p>' +
+          '<div class="space-y-1 text-[0.75rem]">' +
+            '<p><span class="text-emerald-400 font-semibold">Baixo:</span> ' + (riskCounts['Baixo'] || 0) + ' site(s)</p>' +
+            '<p><span class="text-yellow-300 font-semibold">Moderado:</span> ' + (riskCounts['Moderado'] || 0) + ' site(s)</p>' +
+            '<p><span class="text-orange-400 font-semibold">Alto:</span> ' + (riskCounts['Alto'] || 0) + ' site(s)</p>' +
+            '<p><span class="text-red-400 font-semibold">Crítico:</span> ' + (riskCounts['Crítico'] || 0) + ' site(s)</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bg-slate-900/80 rounded-lg p-3 border border-slate-700/70">' +
+          '<p class="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500 mb-1">Distribuição por região</p>' +
+          '<div class="space-y-1 text-[0.75rem]">' +
+            regionHtml +
+          '</div>' +
+        '</div>';
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('mainChart').getContext('2d');
+      mainChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: new Array(40).fill(''),
+          datasets: [
+            { label: 'Cu', data: new Array(40).fill(0), borderColor: '#38bdf8', borderWidth: 2, tension: 0.25, pointRadius: 0 },
+            { label: 'Zinco', data: new Array(40).fill(0), borderColor: '#22c55e', borderWidth: 2, tension: 0.25, pointRadius: 0 },
+            { label: 'Aço', data: new Array(40).fill(0), borderColor: '#fb923c', borderWidth: 2, tension: 0.25, pointRadius: 0 }
+          ]
+        },
+        options: {
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: false },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#9ca3af', font: { size: 10 } },
+              grid: { color: 'rgba(55,65,81,0.6)' }
+            }
+          }
+        }
+      });
+    }
+
+    function pushChartPoint(site) {
+      if (!mainChart) return;
+      const d = mainChart.data.datasets;
+      d[0].data.push(site.sensorCu);
+      d[1].data.push(site.zinc);
+      d[2].data.push(site.steel);
+      d.forEach(function(ds) { ds.data.shift(); });
+      mainChart.update('none');
+    }
+
+    function stepSimulation() {
+      const site = sites[currentIndex];
+      // Weather feed (real/sim) influences risk and UI
+      site.humidity = ARGUS.weather.humidity;
+      site.wind = ARGUS.weather.wind;
+      // Maintain per-site history for ARGUS
+      pushHistory(site);
+      const sc = SCENARIOS[currentScenario] || SCENARIOS.default;
+      const base = site.envFactor * sc.corrosionMultiplier;
+
+      const prevZ = site.zinc;
+      const prevS = site.steel;
+      const prevPlate = site.plateDamage;
+
+      const deltaCu = (Math.random() * 0.8 + 0.2) * base;
+      site.sensorCu += deltaCu;
+      const deltaZinc = deltaCu * 0.5;
+      site.zinc = Math.min(120, site.zinc + deltaZinc);
+      const deltaPlate = deltaCu * 0.4;
+      site.plateDamage = Math.min(100, site.plateDamage + deltaPlate);
+
+      if (site.zinc > 80) {
+        const deltaSteel = (site.zinc - 80) * 0.02 * base;
+        site.steel = Math.min(100, site.steel + deltaSteel);
+      }
+
+      const deltaBat = 0.03 * base;
+      site.battery = Math.max(0, site.battery - deltaBat);
+
+      site.costSaved += 0.06 * base;
+
+            // clima vem do ARGUS.weather (simulado ou real)
+      site.humidity = ARGUS.weather.humidity;
+      site.wind = ARGUS.weather.wind;
+site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.02)));
+      site.gwSignal = Math.max(-105, Math.min(-60, site.gwSignal + (Math.random() * 4 - 2)));
+
+      lastGwSeenSeconds = 0;
+
+      if (prevZ < THRESHOLDS.zincAttention && site.zinc >= THRESHOLDS.zincAttention && site.zinc < THRESHOLDS.zincCritical) {
+        addEvent('warn', 'Zinco em atenção (' + site.id + ')', 'Proteção de zinco entrou em faixa de atenção para o site ' + site.id + '.');
+      }
+      if (prevZ < THRESHOLDS.zincCritical && site.zinc >= THRESHOLDS.zincCritical) {
+        addEvent('critical', 'Zinco esgotado (' + site.id + ')', 'Proteção de zinco atingiu limite crítico para o site ' + site.id + '.');
+      }
+      if (prevS < THRESHOLDS.steelAttention && site.steel >= THRESHOLDS.steelAttention && site.steel < THRESHOLDS.steelCritical) {
+        addEvent('warn', 'Dano em aço em atenção (' + site.id + ')', 'Degradação estrutural entrou em zona de atenção.');
+      }
+      if (prevS < THRESHOLDS.steelCritical && site.steel >= THRESHOLDS.steelCritical) {
+        addEvent('critical', 'Dano estrutural crítico (' + site.id + ')', 'Dano em aço acima do limite crítico para o site ' + site.id + '.');
+      }
+      if (prevPlate < 50 && site.plateDamage >= 50) {
+        addEvent('warn', 'Placa sacrificial degradada', 'Placa de sacrifício ultrapassou 50% de dano no site ' + site.id + '.');
+      }
+
+      stepsCounter++;
+      if (stepsCounter % 15 === 0) {
+        addEvent('info', 'Stream saudável', 'Gateway reportando dados de corrosão de forma contínua.');
+      }
+
+      updateHeader(site);
+      updateSensorCards(site);
+      refreshRiskTable();
+      pushChartPoint(site);
+      updateArgusPanel(site);
+    }
+
+    function showPage(name) {
+      const sections = document.querySelectorAll('.page-section');
+      for (let i = 0; i < sections.length; i++) {
+        sections[i].classList.remove('active');
+      }
+      const page = document.getElementById('page-' + name);
+      if (page) page.classList.add('active');
+
+      const buttons = document.querySelectorAll('[data-page-target]');
+      for (let j = 0; j < buttons.length; j++) {
+        buttons[j].classList.remove('sidebar-item-active');
+      }
+      const activeBtn = document.querySelector('[data-page-target="' + name + '"]');
+      if (activeBtn) activeBtn.classList.add('sidebar-item-active');
+    }
+
+    function exportPdf() {
+      const site = sites[currentIndex];
+      const iis = calcIIS(site);
+      const sc = SCENARIOS[currentScenario] || SCENARIOS.default;
+
+      const jsPDF = window.jspdf.jsPDF;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Relatório TowerGuard - Site ' + site.id, 14, 20);
+      doc.setFontSize(11);
+      doc.text('Nome: ' + site.name, 14, 32);
+      doc.text('Distância da orla: ' + site.distKm.toFixed(1) + ' km', 14, 40);
+      doc.text('Fator ISO: ' + site.envFactor.toFixed(2) + ' (' + isoCategory(site.envFactor) + ')', 14, 48);
+      doc.text('Cenário: ' + sc.label, 14, 56);
+      doc.text('Índice de Integridade: ' + iis.toFixed(0) + '/100', 14, 64);
+
+      doc.text('Sensor Cu: ' + site.sensorCu.toFixed(2) + ' mV', 14, 76);
+      doc.text('Bateria Sensor: ' + site.battery.toFixed(0) + '%', 14, 84);
+      doc.text('Dano Placa: ' + site.plateDamage.toFixed(1) + '%', 14, 92);
+      doc.text('Zinco: ' + site.zinc.toFixed(1) + '%', 14, 100);
+      doc.text('Aço: ' + site.steel.toFixed(1) + '%', 14, 108);
+
+      doc.text('Região: ' + site.region + ' • ' + site.city, 14, 120);
+      doc.text('Umidade: ' + site.humidity.toFixed(0) + ' %', 14, 128);
+      doc.text('Vento: ' + site.wind.toFixed(1) + ' km/h', 14, 136);
+
+      doc.text('Gateway: sinal ' + site.gwSignal.toFixed(0) + ' dBm, bateria ' + site.gwBattery.toFixed(0) + '%', 14, 148);
+
+      doc.save('towerguard_' + site.id + '.pdf');
+    }
+
+    function exportCsv() {
+      const site = sites[currentIndex];
+      const rows = [
+        ['campo', 'valor'],
+        ['site_id', site.id],
+        ['nome', site.name],
+        ['dist_km', site.distKm],
+        ['fator_iso', site.envFactor],
+        ['sensor_cu_mv', site.sensorCu],
+        ['bateria_pct', site.battery],
+        ['dano_placa_pct', site.plateDamage],
+        ['zinco_pct', site.zinc],
+        ['aco_pct', site.steel],
+        ['regiao', site.region],
+        ['cidade', site.city],
+        ['umidade_pct', site.humidity],
+        ['vento_kmh', site.wind],
+        ['gw_signal_dbm', site.gwSignal],
+        ['gw_bateria_pct', site.gwBattery]
+      ];
+      let csv = '';
+      for (let i = 0; i < rows.length; i++) {
+        csv += rows[i].join(';') + '\n';
+      }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'towerguard_' + site.id + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function initSiteSelect() {
+      const sel = document.getElementById('siteSelect');
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = s.id + ' — ' + s.name;
+        sel.appendChild(opt);
+      }
+
+      const savedIndex = localStorage.getItem('tg.currentSiteIndex');
+      let initialIndex = 0;
+      if (savedIndex !== null) {
+        const parsed = parseInt(savedIndex, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < sites.length) {
+          initialIndex = parsed;
+        }
+      }
+
+      currentIndex = initialIndex;
+      sel.value = String(initialIndex);
+
+      sel.addEventListener('change', function() {
+        currentIndex = parseInt(sel.value, 10);
+        if (isNaN(currentIndex) || currentIndex < 0 || currentIndex >= sites.length) {
+          currentIndex = 0;
+        }
+        localStorage.setItem('tg.currentSiteIndex', String(currentIndex));
+        const site = sites[currentIndex];
+        updateHeader(site);
+        updateSensorCards(site);
+        refreshRiskTable();
+        if (mainChart) {
+          for (let i = 0; i < mainChart.data.datasets.length; i++) {
+            mainChart.data.datasets[i].data = new Array(40).fill(0);
+          }
+          mainChart.update();
+        }
+        addEvent('info', 'Site alterado', 'Operador selecionou ' + site.id + ' — ' + site.name + '.');
+        showToast('Site alterado para ' + site.id);
+      });
+    }
+
+    function initClock() {
+      const lbl = document.getElementById('clockLabel');
+      function tick() {
+        const d = new Date();
+        lbl.textContent = d.toLocaleTimeString('pt-BR');
+        lastGwSeenSeconds += 1;
+        const site = sites[currentIndex];
+        updateGatewayCard(site);
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    function initSidebarNav() {
+      const buttons = document.querySelectorAll('[data-page-target]');
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].addEventListener('click', function() {
+          const target = buttons[i].getAttribute('data-page-target');
+          showPage(target);
+        });
+      }
+    }
+
+    function initButtons() {
+      const btnSim = document.getElementById('btnSim');
+      const btnPresent = document.getElementById('btnPresent');
+      const btnMaint = document.getElementById('btnMaint');
+      const btnPdf = document.getElementById('btnPdf');
+      const btnCsv = document.getElementById('btnCsv');
+      const btnLogout = document.getElementById('btnLogout');
+      const connText = document.getElementById('connText');
+
+      btnSim.addEventListener('click', function() {
+        if (simInterval) {
+          clearInterval(simInterval);
+          simInterval = null;
+          btnSim.textContent = 'Iniciar Simulação';
+          connText.textContent = 'Gateway Online (sem avanço)';
+          addEvent('info', 'Simulação pausada', 'Fluxo de dados de corrosão pausado para análise.');
+          showToast('Simulação pausada');
+        } else {
+          simInterval = setInterval(stepSimulation, 1200);
+          btnSim.textContent = 'Pausar Simulação';
+          connText.textContent = 'Gateway Online – stream de dados ativo';
+          addEvent('info', 'Simulação iniciada', 'Fluxo de dados de corrosão em tempo real (simulado).');
+          showToast('Simulação iniciada');
+        }
+      });
+
+      btnPresent.addEventListener('click', function() {
+        if (simInterval) clearInterval(simInterval);
+        simInterval = setInterval(stepSimulation, 400);
+        btnSim.textContent = 'Pausar Simulação';
+        connText.textContent = 'Modo executivo – avanço acelerado';
+        addEvent('info', 'Modo Executivo', 'Dashboard em modo executivo por 20 segundos para apresentação.');
+        showToast('Modo Executivo por 20 segundos');
+        setTimeout(function() {
+          if (simInterval) {
+            clearInterval(simInterval);
+            simInterval = setInterval(stepSimulation, 1200);
+            connText.textContent = 'Gateway Online – stream de dados ativo';
+          }
+        }, 20000);
+      });
+
+      btnMaint.addEventListener('click', function() {
+        const site = sites[currentIndex];
+        addEvent('info', 'Manutenção acionada', 'Ordem de manutenção emitida para ' + site.id + '.');
+        showToast('Ordem de manutenção emitida para ' + site.id);
+      });
+
+      if (btnPdf) {
+        btnPdf.addEventListener('click', function() {
+          exportPdf();
+          showToast('PDF gerado para o site atual');
+        });
+      }
+
+      if (btnCsv) {
+        btnCsv.addEventListener('click', function() {
+          exportCsv();
+          showToast('CSV exportado para o site atual');
+        });
+      }
+
+      btnLogout.addEventListener('click', function() {
+        addEvent('info', 'Logout simulado', 'Sessão do operador encerrada (apenas front-end).');
+        showToast('Logout simulado. (Somente front-end)');
+      });
+    }
+
+    function initRegisterForm() {
+      const form = document.getElementById('formRegister');
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('newId').value.trim().toUpperCase();
+        const name = document.getElementById('newName').value.trim();
+        const dist = parseFloat(document.getElementById('newDist').value);
+        const factor = parseFloat(document.getElementById('newFactor').value);
+        if (!id || !name || isNaN(dist) || isNaN(factor)) {
+          showToast('Preencha todos os campos corretamente.');
+          return;
+        }
+        sites.push({
+          id: id,
+          name: name,
+          distKm: dist,
+          envFactor: factor,
+          region: 'ND',
+          city: 'Novo Site',
+          address: 'Endereço a definir',
+          humidity: 70,
+          wind: 10,
+          sensorCu: 10,
+          battery: 100,
+          plateDamage: 0,
+          zinc: 10,
+          steel: 0,
+          costSaved: 0,
+          gwBattery: 100,
+          gwSignal: -80
+        });
+        const sel = document.getElementById('siteSelect');
+        const idx = sites.length - 1;
+        const opt = document.createElement('option');
+        opt.value = String(idx);
+        opt.textContent = id + ' — ' + name;
+        sel.appendChild(opt);
+        sel.value = String(idx);
+        sel.dispatchEvent(new Event('change'));
+        form.reset();
+        addEvent('info', 'Novo site cadastrado', 'Site ' + id + ' incluído na simulação.');
+        showToast('Novo site cadastrado na simulação.');
+      });
+    }
+
+    function initScenarioSelect() {
+      const sel = document.getElementById('scenarioSelect');
+      sel.addEventListener('change', function() {
+        currentScenario = sel.value;
+        const sc = SCENARIOS[currentScenario] || SCENARIOS.default;
+        const site = sites[currentIndex];
+        addEvent('info', 'Cenário atualizado', 'Novo cenário: ' + sc.label + '.');
+        updateHeader(site);
+        updateSensorCards(site);
+        refreshRiskTable();
+        showToast('Cenário alterado para ' + sc.label);
+      });
+    }
+
+    
+    // -------------------------
+    // ARGUS — Predictive Decision Engine (demo/local)
+    // -------------------------
+    const ARGUS = {
+      weather: {
+        source: 'sim', // 'sim' | 'real'
+        humidity: 78,
+        wind: 12,
+        temp: 27,
+        lastUpdated: null
+      },
+      config: {
+        useRealWeather: false,
+        owKey: '',
+        owLat: '',
+        owLon: '',
+        fetchEveryMs: 10 * 60 * 1000
+      },
+      lastSnapshot: null,
+      history: {} // per site: { zinc:[], steel:[], plate:[], cu:[], t:[] }
+    };
+
+    function loadArgusConfig() {
+      try {
+        const raw = localStorage.getItem('tw_argus_cfg');
+        if (!raw) return;
+        const cfg = JSON.parse(raw);
+        ARGUS.config = { ...ARGUS.config, ...cfg };
+      } catch (e) {}
+    }
+
+    function saveArgusConfig() {
+      localStorage.setItem('tw_argus_cfg', JSON.stringify(ARGUS.config));
+    }
+
+    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+    function updateSimWeather() {
+      // Simulação ambiental com variação lenta (boa para demo)
+      const driftH = (Math.random() * 2.2 - 1.1);
+      const driftW = (Math.random() * 1.8 - 0.9);
+      const driftT = (Math.random() * 0.8 - 0.4);
+      ARGUS.weather.humidity = clamp(ARGUS.weather.humidity + driftH, 45, 98);
+      ARGUS.weather.wind = clamp(ARGUS.weather.wind + driftW, 0, 45);
+      ARGUS.weather.temp = clamp(ARGUS.weather.temp + driftT, 16, 38);
+      ARGUS.weather.source = 'sim';
+      ARGUS.weather.lastUpdated = new Date();
+    }
+
+    async function fetchRealWeatherOnce() {
+      const { owKey, owLat, owLon, useRealWeather } = ARGUS.config;
+      if (!useRealWeather) return false;
+      if (!owKey || !owLat || !owLon) return false;
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(owLat)}&lon=${encodeURIComponent(owLon)}&units=metric&appid=${encodeURIComponent(owKey)}`;
+
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('OpenWeather HTTP ' + res.status);
+      const data = await res.json();
+
+      const humidity = data?.main?.humidity;
+      const temp = data?.main?.temp;
+      const windMs = data?.wind?.speed;
+      if (typeof humidity !== 'number' || typeof temp !== 'number' || typeof windMs !== 'number') {
+        throw new Error('OpenWeather payload inesperado');
+      }
+
+      ARGUS.weather.humidity = clamp(humidity, 0, 100);
+      ARGUS.weather.temp = clamp(temp, -30, 60);
+      ARGUS.weather.wind = clamp(windMs * 3.6, 0, 120); // m/s -> km/h
+      ARGUS.weather.source = 'real';
+      ARGUS.weather.lastUpdated = new Date();
+      return true;
+    }
+
+    function startWeatherLoop() {
+      // Atualiza imediatamente e depois em intervalos
+      const tick = async () => {
+        try {
+          if (ARGUS.config.useRealWeather) {
+            await fetchRealWeatherOnce();
+          } else {
+            updateSimWeather();
+          }
+          updateArgusPanel(sites[currentIndex]); // atualizar painel com clima
+        } catch (e) {
+          // Se falhar o real, volta para simulado para não quebrar demo
+          ARGUS.config.useRealWeather = false;
+          saveArgusConfig();
+          updateSimWeather();
+          updateArgusPanel(sites[currentIndex]);
+          showToast('Clima real indisponível — usando simulação');
+        }
+      };
+      tick();
+      setInterval(tick, ARGUS.config.fetchEveryMs);
+    }
+
+    function ensureHistory(siteId) {
+      if (!ARGUS.history[siteId]) {
+        ARGUS.history[siteId] = { zinc: [], steel: [], plate: [], cu: [], t: [] };
+      }
+      return ARGUS.history[siteId];
+    }
+
+    function pushHistory(site) {
+      const h = ensureHistory(site.id);
+      const now = new Date();
+      const t = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      h.t.push(t);
+      h.cu.push(site.sensorCu);
+      h.zinc.push(site.zinc);
+      h.steel.push(site.steel);
+      h.plate.push(site.plateDamage);
+
+      const MAX = 420; // ~7h em 1.2s/tick (demo). Ajuste fino depois.
+      if (h.t.length > MAX) {
+        h.t.shift(); h.cu.shift(); h.zinc.shift(); h.steel.shift(); h.plate.shift();
+      }
+    }
+
+    function slope(arr, n=30) {
+      // inclinação simples (últimos n pontos)
+      if (!arr || arr.length < Math.max(6, n)) return 0;
+      const a = arr.slice(-n);
+      const x0 = 0, x1 = a.length - 1;
+      const y0 = a[0], y1 = a[a.length - 1];
+      return (y1 - y0) / (x1 - x0);
+    }
+
+    function zscoreLast(arr, n=60) {
+      if (!arr || arr.length < n) return 0;
+      const w = arr.slice(-n);
+      const mean = w.reduce((s,v)=>s+v,0)/w.length;
+      const varr = w.reduce((s,v)=>s+(v-mean)*(v-mean),0)/w.length;
+      const sd = Math.sqrt(varr) || 1;
+      const last = w[w.length-1];
+      return (last - mean) / sd;
+    }
+
+    function envImpact(env) {
+      // Score ambiental 0..1 baseado em umidade + vento + temperatura (simples e explicável)
+      let score = 0;
+      let reasons = [];
+
+      if (env.humidity >= 80) { score += 0.45; reasons.push('Umidade elevada'); }
+      if (env.humidity >= 90) { score += 0.15; reasons.push('Umidade extrema'); }
+
+      if (env.wind >= 14) { score += 0.25; reasons.push('Vento persistente'); }
+      if (env.wind >= 22) { score += 0.10; reasons.push('Vento forte'); }
+
+      if (env.temp >= 30) { score += 0.10; reasons.push('Temperatura alta'); }
+
+      score = clamp(score, 0, 1);
+      return { score, reasons };
+    }
+
+    function computeRulDays(current, critical, slopePerTick, ticksPerDay=1200) {
+      // Demo: converte slope/tick para dias aproximados. Ajustaremos em produção com taxa real (minuto a minuto).
+      if (slopePerTick <= 0.0001) return null;
+      const remaining = Math.max(0, critical - current);
+      const ticks = remaining / slopePerTick;
+      return Math.ceil(ticks / ticksPerDay);
+    }
+
+    function computeArgus(site) {
+      const env = {
+        humidity: ARGUS.weather.humidity,
+        wind: ARGUS.weather.wind,
+        temp: ARGUS.weather.temp
+      };
+
+      const h = ensureHistory(site.id);
+      const zincSlope = slope(h.zinc, 40);
+      const steelSlope = slope(h.steel, 40);
+      const plateSlope = slope(h.plate, 40);
+
+      // RUL (dias) — ajustado por ambiente
+      const envFx = 1 + envImpact(env).score * 0.6; // até +60% de aceleração
+      const zincRul = computeRulDays(site.zinc, THRESHOLDS.zincCritical, zincSlope * envFx);
+      const plateRul = computeRulDays(site.plateDamage, 100, plateSlope * envFx);
+      const steelRul = computeRulDays(site.steel, THRESHOLDS.steelCritical, steelSlope * envFx);
+
+      const rulMin = [zincRul, plateRul, steelRul].filter(v => typeof v === 'number' && isFinite(v)).sort((a,b)=>a-b)[0];
+      const ci = rulMin ? `±${Math.max(2, Math.round(rulMin*0.15))} dias` : '—';
+
+      // Anomalia (Z-score) + drift (inclinação)
+      const zZinc = Math.abs(zscoreLast(h.zinc, 80));
+      const zPlate = Math.abs(zscoreLast(h.plate, 80));
+      const zSteel = Math.abs(zscoreLast(h.steel, 80));
+
+      const anomalies = [];
+      if (zZinc >= 2.2) anomalies.push({ variable:'zinc', type:'desvio', severity: zZinc >= 3.0 ? 'high':'medium', detail:`Z-score ${zZinc.toFixed(1)}`});
+      if (zPlate >= 2.2) anomalies.push({ variable:'plate', type:'desvio', severity: zPlate >= 3.0 ? 'high':'medium', detail:`Z-score ${zPlate.toFixed(1)}`});
+      if (zSteel >= 2.2) anomalies.push({ variable:'steel', type:'desvio', severity: zSteel >= 3.0 ? 'high':'medium', detail:`Z-score ${zSteel.toFixed(1)}`});
+
+      // Estado
+      let state = 'stable';
+      if (site.zinc >= THRESHOLDS.zincCritical || site.steel >= THRESHOLDS.steelCritical) state = 'critical';
+      else if (site.zinc >= THRESHOLDS.zincAttention || site.steel >= THRESHOLDS.steelAttention) state = 'attention';
+      // Eleva para attention por ambiente agravado persistente (diferencial)
+      const envEval = envImpact(env);
+      if (state === 'stable' && envEval.score >= 0.70) state = 'attention';
+
+      // Confiança
+      let confidence = 'Alta';
+      if (h.t.length < 60) confidence = 'Média';
+      if (h.t.length < 25) confidence = 'Baixa';
+
+      // Score (0..100) explicável
+      let score =
+        (site.zinc/120)*35 +
+        (site.steel/100)*35 +
+        (site.plateDamage/100)*20 +
+        (envEval.score)*8 +
+        (anomalies.some(a=>a.severity==='high') ? 2 : 0);
+
+      score = clamp(Math.round(score), 0, 100);
+
+      // Headline direta (sem rodeio)
+      let headline = 'Operação estável. Nenhuma anomalia relevante detectada.';
+      const reasons = [];
+
+      if (state === 'critical') {
+        headline = 'Limite crítico atingido. Ação imediata recomendada.';
+      } else if (state === 'attention') {
+        headline = 'Atenção: cenário agravado ou tendência acelerada detectada.';
+      }
+
+      if (site.zinc >= THRESHOLDS.zincAttention) reasons.push(`Zinco em ${site.zinc.toFixed(1)}% (atenção)`);
+      if (site.zinc >= THRESHOLDS.zincCritical) reasons.push(`Zinco esgotado (${site.zinc.toFixed(1)}%)`);
+      if (site.plateDamage >= 50 && site.plateDamage < 100) reasons.push(`Placa em ${site.plateDamage.toFixed(0)}% (degradação)`);
+      if (site.plateDamage >= 100) reasons.push('Placa sacrificial esgotada (100%)');
+      if (site.steel >= THRESHOLDS.steelAttention) reasons.push(`Aço em ${site.steel.toFixed(1)}% (atenção)`);
+      if (site.steel >= THRESHOLDS.steelCritical) reasons.push(`Aço crítico (${site.steel.toFixed(1)}%)`);
+      envEval.reasons.forEach(r => reasons.push(`Ambiente: ${r.toLowerCase()}`));
+      if (anomalies.length) reasons.push(`Anomalias: ${anomalies.map(a=>`${a.variable}:${a.detail}`).join(', ')}`);
+
+      const envImpactText = envEval.score >= 0.75 ? 'impacto alto' : (envEval.score >= 0.45 ? 'impacto moderado' : 'impacto normal');
+
+      return {
+        site_id: site.id,
+        timestamp: new Date().toISOString(),
+        operational_state: state,
+        confidence,
+        score,
+        env: { ...env, impact: envImpactText, source: ARGUS.weather.source },
+        rul: {
+          zinc_days: zincRul,
+          plate_days: plateRul,
+          steel_days: steelRul,
+          recommended_days: rulMin ?? null,
+          ci
+        },
+        anomalies,
+        reasons
+      };
+    }
+
+    function updateArgusPanel(site) {
+      if (!site) return;
+      const snapshot = computeArgus(site);
+      ARGUS.lastSnapshot = snapshot;
+
+      // badge
+      const badge = document.getElementById('argusStateBadge');
+      const dot = document.getElementById('argusDot');
+      const st = document.getElementById('argusStateText');
+      const headline = document.getElementById('argusHeadline');
+
+      const map = {
+        stable: { text:'STABLE', cls:'bg-emerald-900/30 border-emerald-500/40 text-emerald-300', dot:'bg-emerald-400' },
+        attention: { text:'ATTENTION', cls:'bg-amber-900/30 border-amber-500/40 text-amber-300', dot:'bg-amber-400' },
+        critical: { text:'CRITICAL', cls:'bg-red-900/30 border-red-500/40 text-red-300', dot:'bg-red-400' }
+      };
+      const m = map[snapshot.operational_state] || map.stable;
+      badge.className = `chip ${m.cls} flex items-center gap-1`;
+      dot.className = `badge-dot ${m.dot}`;
+      st.textContent = m.text;
+      headline.textContent = snapshot.reasons.length ? snapshot.reasons[0].includes('Zinco') || snapshot.reasons[0].includes('Aço') ? snapshot.reasons[0] : snapshot.operational_state === 'stable' ? 'Operação estável. Nenhuma anomalia relevante detectada.' : headline.textContent : headline.textContent;
+      // headline mais direta
+      headline.textContent = snapshot.operational_state === 'critical'
+        ? 'Limite crítico atingido. Ação imediata recomendada.'
+        : snapshot.operational_state === 'attention'
+          ? 'Atenção: cenário agravado ou tendência acelerada detectada.'
+          : 'Operação estável. Nenhuma anomalia relevante detectada.';
+
+      // env
+      document.getElementById('argusHum').textContent = snapshot.env.humidity.toFixed(0);
+      document.getElementById('argusWind').textContent = snapshot.env.wind.toFixed(0);
+      document.getElementById('argusTemp').textContent = snapshot.env.temp.toFixed(0);
+      document.getElementById('argusEnvImpact').textContent = `${snapshot.env.impact} (${snapshot.env.source})`;
+
+      // RUL line
+      const rec = snapshot.rul.recommended_days;
+      document.getElementById('argusRulLine').textContent =
+        rec ? `Intervenção recomendada em ~${rec} dias (${snapshot.rul.ci}).`
+            : 'Intervenção recomendada em ~— dias (±—).';
+
+      // confidence
+      document.getElementById('argusConfidence').textContent = `Confiança: ${snapshot.confidence}`;
+
+      // reasons list
+      const ul = document.getElementById('argusReasons');
+      ul.innerHTML = '';
+      const top = snapshot.reasons.slice(0, 4);
+      (top.length ? top : ['Sem fatores dominantes no momento.']).forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = r;
+        ul.appendChild(li);
+      });
+    }
+
+    function copilotReply(question) {
+      const s = ARGUS.lastSnapshot;
+      if (!s) return 'Ainda não tenho dados suficientes. Inicie a simulação.';
+      const q = (question || '').toLowerCase();
+
+      if (q.includes('por que') || q.includes('porque') || q.includes('motivo')) {
+        const top = s.reasons.slice(0,3);
+        return top.length
+          ? `Risco ${s.score}/100. Motivos principais: ${top.join('; ')}. Confiança: ${s.confidence}.`
+          : `Risco ${s.score}/100. Nenhum fator dominante. Confiança: ${s.confidence}.`;
+      }
+
+      if (q.includes('quando') || q.includes('agir') || q.includes('manutenção') || q.includes('interven')) {
+        const rec = s.rul.recommended_days;
+        if (!rec) return `Não consigo estimar RUL com confiança agora. Confiança: ${s.confidence}.`;
+        const details = [];
+        if (typeof s.rul.plate_days === 'number') details.push(`Placa: ~${s.rul.plate_days}d`);
+        if (typeof s.rul.zinc_days === 'number') details.push(`Zinco: ~${s.rul.zinc_days}d`);
+        if (typeof s.rul.steel_days === 'number') details.push(`Aço: ~${s.rul.steel_days}d`);
+        return `Intervenção recomendada em ~${rec} dias (${s.rul.ci}). ${details.join(' | ')}. Confiança: ${s.confidence}.`;
+      }
+
+      if (q.includes('ambiente') || q.includes('clima') || q.includes('umidade') || q.includes('vento') || q.includes('temper')) {
+        return `Ambiente atual: umidade ${s.env.humidity.toFixed(0)}%, vento ${s.env.wind.toFixed(0)} km/h, temp ${s.env.temp.toFixed(0)}°C. Impacto: ${s.env.impact}. Fonte: ${s.env.source}.`;
+      }
+
+      if (q.includes('resumo') || q.includes('24h') || q.includes('últimas') || q.includes('ultimas')) {
+        const anomalies = s.anomalies.length ? `${s.anomalies.length} anomalia(s) detectada(s)` : 'nenhuma anomalia relevante';
+        return `Estado: ${s.operational_state.toUpperCase()} | Risco: ${s.score}/100 | ${anomalies} | Ambiente: ${s.env.impact} (${s.env.source}) | Confiança: ${s.confidence}.`;
+      }
+
+      return `Estado: ${s.operational_state.toUpperCase()} | Risco ${s.score}/100 | Recom.: ${s.rul.recommended_days ? '~'+s.rul.recommended_days+' dias' : '—'} | Confiança: ${s.confidence}. Pergunte “por que”, “quando agir” ou “ambiente”.`;
+    }
+
+    function appendChat(role, text) {
+      const chat = document.getElementById('argusChat');
+      const wrap = document.createElement('div');
+      wrap.className = role === 'user'
+        ? 'flex justify-end'
+        : 'flex justify-start';
+
+      const bubble = document.createElement('div');
+      bubble.className = role === 'user'
+        ? 'max-w-[85%] rounded-2xl bg-sky-600 text-white px-3 py-2'
+        : 'max-w-[85%] rounded-2xl bg-slate-900/60 border border-slate-700/40 text-slate-100 px-3 py-2';
+
+      bubble.textContent = text;
+      wrap.appendChild(bubble);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function initArgusUi() {
+      // Copilot modal handlers
+      const modal = document.getElementById('argusModal');
+      const openBtn = document.getElementById('argusCopilotBtn');
+      const closeBtn = document.getElementById('argusModalClose');
+      const sendBtn = document.getElementById('argusSend');
+      const input = document.getElementById('argusInput');
+
+      const open = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); input.focus(); };
+      const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+
+      if (openBtn) openBtn.addEventListener('click', () => {
+        document.getElementById('argusChat').innerHTML = '';
+        appendChat('assistant', 'ARGUS online. Faça sua pergunta.');
+        open();
+      });
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+      const send = () => {
+        const q = input.value.trim();
+        if (!q) return;
+        appendChat('user', q);
+        input.value = '';
+        const a = copilotReply(q);
+        appendChat('assistant', a);
+      };
+      if (sendBtn) sendBtn.addEventListener('click', send);
+      if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+      // Weather modal handlers
+      const wModal = document.getElementById('weatherModal');
+      const wOpen = document.getElementById('argusWeatherBtn');
+      const wClose = document.getElementById('weatherModalClose');
+      const wSave = document.getElementById('weatherSave');
+      const wClear = document.getElementById('weatherClear');
+
+      const owKey = document.getElementById('owKey');
+      const owLat = document.getElementById('owLat');
+      const owLon = document.getElementById('owLon');
+      const useReal = document.getElementById('useRealWeather');
+      const wStatus = document.getElementById('weatherStatus');
+
+      const wOpenFn = () => { wModal.classList.remove('hidden'); wModal.classList.add('flex'); };
+      const wCloseFn = () => { wModal.classList.add('hidden'); wModal.classList.remove('flex'); };
+
+      if (wOpen) wOpen.addEventListener('click', () => {
+        owKey.value = ARGUS.config.owKey || '';
+        owLat.value = ARGUS.config.owLat || '';
+        owLon.value = ARGUS.config.owLon || '';
+        useReal.checked = !!ARGUS.config.useRealWeather;
+        wStatus.textContent = ARGUS.config.useRealWeather ? 'Clima real ativado.' : 'Clima simulado ativo.';
+        wOpenFn();
+      });
+      if (wClose) wClose.addEventListener('click', wCloseFn);
+      wModal.addEventListener('click', (e) => { if (e.target === wModal) wCloseFn(); });
+
+      if (wSave) wSave.addEventListener('click', async () => {
+        ARGUS.config.owKey = owKey.value.trim();
+        ARGUS.config.owLat = owLat.value.trim();
+        ARGUS.config.owLon = owLon.value.trim();
+        ARGUS.config.useRealWeather = !!useReal.checked;
+        saveArgusConfig();
+
+        if (ARGUS.config.useRealWeather) {
+          wStatus.textContent = 'Testando OpenWeather...';
+          try {
+            await fetchRealWeatherOnce();
+            wStatus.textContent = 'OK. Clima real ativo.';
+            showToast('Clima real ativado');
+          } catch (e) {
+            ARGUS.config.useRealWeather = false;
+            saveArgusConfig();
+            wStatus.textContent = 'Falhou. Verifique a key/lat/lon. Voltando para simulado.';
+            showToast('Falha no clima real');
+          }
+        } else {
+          wStatus.textContent = 'Clima simulado ativo.';
+          showToast('Clima simulado ativo');
+        }
+        updateArgusPanel(sites[currentIndex]);
+      });
+
+      if (wClear) wClear.addEventListener('click', () => {
+        ARGUS.config.useRealWeather = false;
+        ARGUS.config.owKey = '';
+        ARGUS.config.owLat = '';
+        ARGUS.config.owLon = '';
+        saveArgusConfig();
+        owKey.value = ''; owLat.value = ''; owLon.value = ''; useReal.checked = false;
+        wStatus.textContent = 'Configuração limpa. Clima simulado ativo.';
+        showToast('Configuração limpa');
+      });
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initSiteSelect();
+      initClock();
+      initSidebarNav();
+      initButtons();
+      initRegisterForm();
+      initScenarioSelect();
+      initChart();
+      loadArgusConfig();
+      initArgusUi();
+      startWeatherLoop();
+
+      const site = sites[currentIndex];
+      updateHeader(site);
+      updateSensorCards(site);
+      refreshRiskTable();
+      updateArgusPanel(site);
+
+      for (let i = 0; i < 10; i++) {
+        stepSimulation();
+      }
+
+      addEvent('info', 'Monitoramento iniciado', 'Simulação local do parque TowerGuard carregada.');
+    });
+  </script>
+
+  <!-- ARGUS Copilot Modal -->
+  <div id="argusModal" class="fixed inset-0 hidden items-center justify-center bg-slate-950/70 p-4 z-[9999]">
+    <div class="w-full max-w-2xl rounded-2xl bg-slate-950/90 border border-slate-700/60 shadow-2xl">
+      <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
+        <div>
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">ARGUS</div>
+          <div class="text-slate-100 font-semibold">Copiloto — respostas objetivas</div>
+        </div>
+        <button id="argusModalClose" class="btn bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="text-xs text-slate-400">
+          Sugestões: “por que o risco subiu?”, “quando devo agir?”, “resumo 24h”, “o que mudou no ambiente?”
+        </div>
+        <div id="argusChat" class="h-64 overflow-auto rounded-xl bg-slate-900/30 border border-slate-700/40 p-3 text-sm text-slate-200 space-y-2"></div>
+        <div class="flex gap-2">
+          <input id="argusInput" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-sky-500/60" placeholder="Pergunte ao ARGUS..." />
+          <button id="argusSend" class="btn bg-sky-600 hover:bg-sky-500 text-white">
+            Enviar
+          </button>
+        </div>
+        <div class="text-[0.70rem] text-slate-500">
+          Copiloto usa apenas estados calculados pelo TowerGuard (sem inventar dados).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Config Modal -->
+  <div id="weatherModal" class="fixed inset-0 hidden items-center justify-center bg-slate-950/70 p-4 z-[9999]">
+    <div class="w-full max-w-xl rounded-2xl bg-slate-950/90 border border-slate-700/60 shadow-2xl">
+      <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
+        <div>
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Clima Real</div>
+          <div class="text-slate-100 font-semibold">OpenWeather (opcional)</div>
+        </div>
+        <button id="weatherModalClose" class="btn bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3 text-sm text-slate-200">
+        <p class="text-slate-300">
+          Para usar clima real, informe uma chave da OpenWeather e a posição (lat/lon). Se ficar vazio, o ARGUS usa clima simulado.
+        </p>
+        <div class="grid grid-cols-1 gap-2">
+          <label class="text-xs text-slate-400">OpenWeather API Key</label>
+          <input id="owKey" class="rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="Cole sua API key aqui" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-slate-400">Latitude</label>
+            <input id="owLat" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="-12.97" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Longitude</label>
+            <input id="owLon" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="-38.50" />
+          </div>
+        </div>
+        <div class="flex items-center justify-between rounded-xl bg-slate-900/30 border border-slate-700/40 p-3">
+          <div>
+            <div class="text-slate-100 font-semibold text-sm">Usar clima real</div>
+            <div class="text-[0.75rem] text-slate-400">Quando desativado, roda clima simulado controlável para demo.</div>
+          </div>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="useRealWeather" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:bg-emerald-600">
+              <div class="absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+            </div>
+          </label>
+        </div>
+        <div class="flex gap-2">
+          <button id="weatherSave" class="btn w-full bg-emerald-600 hover:bg-emerald-500 text-white">Salvar</button>
+          <button id="weatherClear" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">Limpar</button>
+        </div>
+        <p id="weatherStatus" class="text-[0.75rem] text-slate-400"></p>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+/* ===== TowerGuard ARGUS — Clima por Ativo + Alertas Ambientais Persistentes (V1) =====
+   - Funciona com OpenWeather (se chave configurada) ou fallback simulado
+   - Mantém histórico por site e dispara alertas preditivos (antes do sensor)
+   - Não substitui seu motor: apenas alimenta ARGUS_INPUT.environment e adiciona eventos
+*/
+(function(){
+  // ---------- Util ----------
+  const nowISO = () => new Date().toISOString();
+  const fmtBR = (d) => new Date(d).toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+  // ---------- Sites (lat/lon) ----------
+  // Se você já tiver SITES no código, este bloco respeita o existente.
+  window.SITES = window.SITES || [
+    { id: "EV-BA-01", name: "Boca do Rio - BA", iso: "C5-M", lat: -12.9797, lon: -38.5016 },
+    { id: "EV-RJ-01", name: "Copacabana - RJ", iso: "C5-M", lat: -22.9711, lon: -43.1822 },
+    { id: "EV-SP-01", name: "Santos - SP", iso: "C5-M", lat: -23.9618, lon: -46.3322 }
+  ];
+  window.selectedSiteId = window.selectedSiteId || window.SITES[0].id;
+  function getSelectedSite(){
+    return (window.SITES || []).find(s=>s.id===window.selectedSiteId) || window.SITES[0];
+  }
+
+  // ---------- API Key ----------
+  function getOpenWeatherKey(){ return localStorage.getItem("OPENWEATHER_API_KEY") || ""; }
+  function setOpenWeatherKey(k){ localStorage.setItem("OPENWEATHER_API_KEY", (k||"").trim()); }
+  function hasKey(){ return !!getOpenWeatherKey(); }
+
+  // ---------- Cache ----------
+  const WEATHER_CACHE = new Map(); // siteId -> {ts,data}
+  const WEATHER_TTL_MS = 10*60*1000; // 10 min
+
+  async function fetchWeatherForSite(site){
+    const apiKey = getOpenWeatherKey();
+    if(!apiKey) return null;
+
+    const cached = WEATHER_CACHE.get(site.id);
+    const t = Date.now();
+    if(cached && (t - cached.ts) < WEATHER_TTL_MS) return cached.data;
+
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${site.lat}&lon=${site.lon}&units=metric&appid=${apiKey}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("OpenWeather "+res.status);
+    const data = await res.json();
+
+    const weather = {
+      humidity: data?.main?.humidity ?? null,
+      temperature: data?.main?.temp ?? null,
+      wind_kmh: ((data?.wind?.speed ?? 0) * 3.6),
+      wind_deg: data?.wind?.deg ?? null,
+      source: "openweather",
+      fetched_at: nowISO()
+    };
+    WEATHER_CACHE.set(site.id,{ts:t,data:weather});
+    return weather;
+  }
+
+  function simulatedWeatherForSite(site){
+    // Seed por site para diferenciar comportamento
+    const seed = Math.abs(Math.floor((site.lat*1000 + site.lon*1000)));
+    const baseHum = 70 + (seed % 12);
+    const baseWind = 10 + (Math.floor(seed/7) % 8);
+    const hum = clamp(baseHum + (Math.random()*12), 40, 98);
+    const wind = clamp(baseWind + (Math.random()*10), 0, 40);
+    const temp = clamp(24 + (Math.random()*7), 10, 38);
+    return {
+      humidity: hum,
+      temperature: temp,
+      wind_kmh: wind,
+      wind_deg: Math.floor(Math.random()*360),
+      source: "simulated",
+      fetched_at: nowISO()
+    };
+  }
+
+  // ---------- UI Injection (Site select + Env card) ----------
+  function ensureEnvUI(){
+    // env card
+    if(!document.getElementById("envCard")){
+      const card = document.createElement("div");
+      card.id = "envCard";
+      card.className = "card p-4 space-y-2";
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Condições Ambientais (Site)</p>
+          <span id="envSource" class="text-[0.65rem] text-slate-400">—</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><p class="text-xs text-slate-400">Umidade</p><p class="text-lg font-semibold" id="envHumidity">—%</p></div>
+          <div><p class="text-xs text-slate-400">Vento</p><p class="text-lg font-semibold" id="envWind">— km/h</p></div>
+          <div><p class="text-xs text-slate-400">Temp.</p><p class="text-lg font-semibold" id="envTemp">— °C</p></div>
+        </div>
+        <p class="text-xs text-slate-400" id="envUpdated">Atualização: —</p>
+        <div class="flex items-center gap-2 pt-2">
+          <button id="btnSetWeatherKey" class="px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-200 text-xs">Configurar Clima Real</button>
+          <span class="text-[0.70rem] text-slate-400" id="envKeyHint"></span>
+        </div>
+      `;
+      // tenta inserir na coluna direita do dashboard
+      const candidates = [
+        document.querySelector("#rightColumn"),
+        document.querySelector("[data-right-column]"),
+        document.querySelector(".right-column"),
+        document.querySelector(".col-right"),
+        document.querySelector("#rightPanel"),
+        document.querySelector("aside + main + aside"), // heurística
+      ].filter(Boolean);
+
+      if(candidates[0]){
+        candidates[0].prepend(card);
+      } else {
+        // fallback: fixa no canto inferior direito (não quebra layout)
+        card.style.position="fixed";
+        card.style.right="18px";
+        card.style.bottom="18px";
+        card.style.width="360px";
+        card.style.zIndex="9999";
+        card.style.backdropFilter="blur(10px)";
+        document.body.appendChild(card);
+      }
+    }
+
+    // site select (se não existir)
+    if(!document.getElementById("siteSelect")){
+      const sel = document.createElement("select");
+      sel.id = "siteSelect";
+      sel.className = "px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-200 text-sm";
+      // tenta colocar no header
+      const headerTarget = document.querySelector("header") || document.querySelector(".topbar") || document.body;
+      const wrap = document.createElement("div");
+      wrap.className = "flex items-center gap-2";
+      const label = document.createElement("span");
+      label.className = "text-xs text-slate-400";
+      label.textContent = "Ativo:";
+      wrap.appendChild(label);
+      wrap.appendChild(sel);
+      headerTarget.appendChild(wrap);
+    }
+  }
+
+  function initSiteSelect(){
+    const el = document.getElementById("siteSelect");
+    if(!el) return;
+    el.innerHTML = (window.SITES||[]).map(s=>`<option value="${s.id}">${s.name} (${s.iso})</option>`).join("");
+    el.value = window.selectedSiteId;
+    el.addEventListener("change", async (e)=>{
+      window.selectedSiteId = e.target.value;
+      await refreshSiteContext(true);
+    });
+  }
+
+  function wireKeyButton(){
+    const btn = document.getElementById("btnSetWeatherKey");
+    if(!btn) return;
+    btn.onclick = ()=>{
+      const curr = getOpenWeatherKey();
+      const k = prompt("Cole sua chave da OpenWeather API (fica salva só no seu navegador):", curr || "");
+      if(k===null) return;
+      setOpenWeatherKey(k);
+      refreshSiteContext(true);
+    };
+  }
+
+  // ---------- ENV history per site ----------
+  const ENV_HISTORY = {}; // siteId -> array of {ts,humidity,wind_kmh,temperature,source}
+  const ENV_ALERT_STATE = {}; // siteId -> { aggravated:boolean, last:{[type]:ts} }
+
+  function recordEnv(siteId, env){
+    ENV_HISTORY[siteId] = ENV_HISTORY[siteId] || [];
+    ENV_HISTORY[siteId].push({
+      ts: Date.now(),
+      humidity: env.humidity,
+      wind_kmh: env.wind_kmh,
+      temperature: env.temperature,
+      source: env.source
+    });
+    // manter 7 dias (minuto a minuto) ~10080 pontos, mas aqui é por atualização climática (10 min). manter 7d mesmo assim.
+    const cutoff = Date.now() - (7*24*60*60*1000);
+    while(ENV_HISTORY[siteId].length && ENV_HISTORY[siteId][0].ts < cutoff) ENV_HISTORY[siteId].shift();
+  }
+
+  function sliceWindow(siteId, minutes){
+    const arr = ENV_HISTORY[siteId] || [];
+    const cutoff = Date.now() - minutes*60*1000;
+    return arr.filter(p=>p.ts>=cutoff);
+  }
+
+  function coverageAbove(points, field, threshold){
+    if(!points.length) return 0;
+    let c=0;
+    for(const p of points){ if((p[field] ?? -Infinity) >= threshold) c++; }
+    return c / points.length;
+  }
+
+  function avg(points, field){
+    if(!points.length) return null;
+    let s=0,n=0;
+    for(const p of points){
+      const v = p[field];
+      if(typeof v==="number" && !Number.isNaN(v)){ s+=v; n++; }
+    }
+    return n? s/n : null;
+  }
+
+  function addTimelineEvent(level, title, desc){
+    // tenta usar função existente
+    if(typeof window.addEvent === "function"){
+      // compat: alguns dashboards usam addEvent(level,title,desc)
+      try { window.addEvent(level, title, desc); return; } catch(e){}
+    }
+    // fallback: log
+    console.log("[EVENT]", level, title, desc);
+  }
+
+  function throttle(siteId, key, minMinutes){
+    ENV_ALERT_STATE[siteId] = ENV_ALERT_STATE[siteId] || { aggravated:false, last:{} };
+    const last = ENV_ALERT_STATE[siteId].last[key] || 0;
+    const ok = (Date.now() - last) >= (minMinutes*60*1000);
+    if(ok) ENV_ALERT_STATE[siteId].last[key] = Date.now();
+    return ok;
+  }
+
+  function evaluateEnvAlerts(site){
+    const siteId = site.id;
+    ENV_ALERT_STATE[siteId] = ENV_ALERT_STATE[siteId] || { aggravated:false, last:{} };
+
+    const w6h = sliceWindow(siteId, 6*60);   // 6h
+    const w3h = sliceWindow(siteId, 3*60);   // 3h
+    const humCov6h = coverageAbove(w6h, "humidity", 80);
+    const windCov6h = coverageAbove(w6h, "wind_kmh", 14);
+    const humAvg6h = avg(w6h, "humidity");
+    const windAvg6h = avg(w6h, "wind_kmh");
+
+    // critérios: persistência (cobertura) + mínimos para evitar falso positivo
+    const humPersistent = (w6h.length >= 4) && (humCov6h >= 0.75);   // >=75% das amostras em 6h
+    const windPersistent = (w6h.length >= 4) && (windCov6h >= 0.60); // >=60% das amostras em 6h
+
+    const aggravatedNow = humPersistent && windPersistent;
+
+    // Normalização: últimas 3h abaixo dos thresholds com folga
+    const humCov3h = coverageAbove(w3h, "humidity", 78);
+    const windCov3h = coverageAbove(w3h, "wind_kmh", 12);
+    const normalizedNow = (w3h.length >= 2) && (humCov3h < 0.30) && (windCov3h < 0.30);
+
+    // Disparos
+    if(aggravatedNow && !ENV_ALERT_STATE[siteId].aggravated && throttle(siteId,"env_aggravated",120)){
+      ENV_ALERT_STATE[siteId].aggravated = true;
+      addTimelineEvent("warning",
+        "Cenário ambiental agravado",
+        `Persistência 6h: umidade ≥80% (${Math.round(humCov6h*100)}%), vento ≥14 km/h (${Math.round(windCov6h*100)}%). Médias: ${humAvg6h?Math.round(humAvg6h):"--"}% / ${windAvg6h?Math.round(windAvg6h):"--"} km/h.`
+      );
+    }
+
+    if(normalizedNow && ENV_ALERT_STATE[siteId].aggravated && throttle(siteId,"env_normalized",120)){
+      ENV_ALERT_STATE[siteId].aggravated = false;
+      addTimelineEvent("info",
+        "Condições ambientais normalizadas",
+        "Padrões de umidade/vento reduziram nas últimas 3h; tendência de corrosão deve estabilizar."
+      );
+    }
+
+    // Alertas individuais úteis (mesmo sem agravamento completo)
+    if(humPersistent && throttle(siteId,"hum_persist",180)){
+      addTimelineEvent("info",
+        "Umidade elevada persistente",
+        `Umidade ≥80% em ${Math.round(humCov6h*100)}% das amostras nas últimas 6h.`
+      );
+    }
+    if(windPersistent && throttle(siteId,"wind_persist",180)){
+      addTimelineEvent("info",
+        "Vento persistente",
+        `Vento ≥14 km/h em ${Math.round(windCov6h*100)}% das amostras nas últimas 6h.`
+      );
+    }
+
+    // Expor para ARGUS
+    window.ARGUS_INSIGHTS = window.ARGUS_INSIGHTS || {};
+    ARGUS_INSIGHTS.environment = {
+      aggravated: ENV_ALERT_STATE[siteId].aggravated,
+      humCov6h, windCov6h,
+      humAvg6h, windAvg6h,
+      window6h_samples: w6h.length
+    };
+
+    return ARGUS_INSIGHTS.environment;
+  }
+
+  // ---------- Update UI + Feed ARGUS ----------
+  async function updateEnvironmentForSelectedSite(force=false){
+    const site = getSelectedSite();
+    let weather = null;
+
+    try { weather = await fetchWeatherForSite(site); }
+    catch(e){ weather = null; }
+
+    if(!weather) weather = simulatedWeatherForSite(site);
+
+    // UI
+    const h = document.getElementById("envHumidity");
+    const w = document.getElementById("envWind");
+    const t = document.getElementById("envTemp");
+    const src = document.getElementById("envSource");
+    const upd = document.getElementById("envUpdated");
+    const hint = document.getElementById("envKeyHint");
+
+    if(h) h.textContent = `${Math.round(weather.humidity)}%`;
+    if(w) w.textContent = `${Math.round(weather.wind_kmh)} km/h`;
+    if(t) t.textContent = `${Math.round(weather.temperature)} °C`;
+    if(src) src.textContent = weather.source === "openweather" ? "Real" : "Simulado";
+    if(upd) upd.textContent = `Atualização: ${fmtBR(weather.fetched_at)}`;
+    if(hint) hint.textContent = hasKey() ? "API: OK" : "API: não configurada";
+
+    // Feed ARGUS
+    window.ARGUS_INPUT = window.ARGUS_INPUT || {};
+    ARGUS_INPUT.environment = {
+      site_id: site.id,
+      humidity: weather.humidity,
+      temperature: weather.temperature,
+      wind_kmh: weather.wind_kmh,
+      wind_deg: weather.wind_deg,
+      source: weather.source,
+      fetched_at: weather.fetched_at
+    };
+
+    // Histórico + alertas
+    recordEnv(site.id, weather);
+    evaluateEnvAlerts(site);
+
+    // Se existir painel ARGUS nativo, peça atualização; senão injete um resumo mínimo.
+    if(typeof window.updateArgusPanel === "function"){
+      try { window.updateArgusPanel(); } catch(e){}
+    } else {
+      // fallback: injeta texto no painel se existir id conhecido
+      const el = document.getElementById("argusEnvLine");
+      if(el){
+        const env = window.ARGUS_INSIGHTS?.environment;
+        if(env?.aggravated){
+          el.textContent = "Cenário ambiental agravado (persistência 6h).";
+        } else {
+          el.textContent = "Ambiente dentro do padrão recente.";
+        }
+      }
+    }
+
+    return weather;
+  }
+
+  // ---------- Refresh orchestration ----------
+  async function refreshSiteContext(force=false){
+    await updateEnvironmentForSelectedSite(force);
+  }
+  window.refreshSiteContext = refreshSiteContext;
+
+  // ---------- Boot ----------
+  document.addEventListener("DOMContentLoaded", async ()=>{
+    ensureEnvUI();
+    initSiteSelect();
+    wireKeyButton();
+
+    // Primeira leitura
+    await refreshSiteContext(true);
+
+    // Atualiza clima a cada 10 minutos (real) — simulado também, mas sem overkill
+    setInterval(()=>{ refreshSiteContext(false); }, 10*60*1000);
+  });
+
+})();
+</script>
+
+</body>
+</html>
