@@ -105,7 +105,120 @@
     .page-section.active {
       display: block;
     }
+  
+    /* ARGUS (modal) */
+    .tg-modal{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
+    .tg-modal.hidden{ display:none; }
+    .tg-modal__backdrop{ position:absolute; inset:0; background:rgba(2,6,23,.78); backdrop-filter: blur(10px); }
+    .tg-modal__panel{
+      position:relative; width:min(980px, calc(100vw - 28px)); height:min(640px, calc(100vh - 28px));
+      border-radius: 20px;
+      border:1px solid rgba(148,163,184,.18);
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(124,58,237,.18), transparent 50%),
+                  radial-gradient(900px 500px at 80% 30%, rgba(14,165,233,.14), transparent 55%),
+                  rgba(2,6,23,.78);
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .tg-modal__header{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:18px 18px 10px; }
+    .tg-modal__kicker{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:rgba(148,163,184,.9); }
+    .tg-modal__title{ font-size:18px; font-weight:800; color:rgba(226,232,240,1); margin-top:2px; }
+    .tg-modal__sub{ font-size:12px; color:rgba(148,163,184,.95); margin-top:4px; max-width:720px; }
+    .tg-icon-btn{ width:34px; height:34px; border-radius:999px; border:1px solid rgba(148,163,184,.18); background:rgba(2,6,23,.55); color:rgba(226,232,240,1); }
+    .tg-icon-btn:hover{ background:rgba(2,6,23,.78); }
+    .tg-modal__suggest{ padding:0 18px 12px; font-size:12px; color:rgba(148,163,184,.95); }
+    .tg-chat{ padding:0 18px 16px; height: calc(100% - 118px); display:flex; flex-direction:column; gap:12px; }
+    .tg-thread{ flex:1; overflow:auto; border-radius:16px; border:1px solid rgba(148,163,184,.14); background:rgba(2,6,23,.35); padding:14px; }
+    .tg-msg{ max-width:82%; padding:10px 12px; border-radius:16px; border:1px solid rgba(148,163,184,.14); margin:8px 0; }
+    .tg-msg--user{ margin-left:auto; background:rgba(37,99,235,.18); }
+    .tg-msg--argus{ background:rgba(124,58,237,.12); }
+    .tg-msg__meta{ font-size:11px; color:rgba(148,163,184,.9); margin-bottom:4px; }
+    .tg-msg__text{ font-size:13px; color:rgba(226,232,240,1); line-height:1.35; white-space:pre-wrap; }
+    .tg-inputbar{ display:flex; gap:10px; }
+    .tg-input{
+      flex:1; height:44px; border-radius:14px; padding:0 14px;
+      border:1px solid rgba(148,163,184,.16); background:rgba(2,6,23,.55); color:rgba(226,232,240,1);
+      outline:none;
+    }
+    .tg-input:focus{ border-color: rgba(124,58,237,.55); box-shadow: 0 0 0 4px rgba(124,58,237,.18); }
+    .tg-send{
+      height:44px; padding:0 16px; border-radius:14px;
+      border:1px solid rgba(124,58,237,.35); background:rgba(124,58,237,.75); color:white; font-weight:700;
+    }
+    .tg-send:hover{ background:rgba(124,58,237,.95); }
+    .tg-footnote{ font-size:11px; color:rgba(148,163,184,.9); }
+
+  
+    /* ARGUS chips (card) */
+    .tg-chip{
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,.18);
+      background: rgba(2,6,23,.45);
+      color: rgba(226,232,240,1);
+    }
+    .tg-chip:hover{ background: rgba(2,6,23,.70); }
+
   </style>
+
+<style>
+/* ================= MOBILE ENTERPRISE MODE ================= */
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  /* Stack layout */
+  main {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px;
+  }
+
+  /* Cards full width */
+  .glass, .card, .panel {
+    width: 100% !important;
+  }
+
+  /* Hide heavy graphs by default */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Timeline collapsible */
+  .timeline {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  /* ARGUS dock button */
+  #argusDockBtn {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 9999;
+    background: #0f172a;
+    color: #fff;
+    border-radius: 999px;
+    padding: 14px 18px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  /* ARGUS modal full screen */
+  #argusModal {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    z-index: 10000 !important;
+  }
+}
+</style>
+
 </head>
 <body class="dark">
   <div class="h-screen flex overflow-hidden">
@@ -206,8 +319,13 @@
             Iniciar Simulação
           </button>
           <button id="btnPresent" class="px-3 py-1.5 rounded-full bg-amber-500/90 hover:bg-amber-400 text-xs font-semibold text-slate-900">
-            Modo Executivo
+            Modo Executivo <span class="ml-2 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/30">Modo: Demonstração</span>
           </button>
+
+          <button id="btnArgus" class="px-3 py-1.5 rounded-full bg-violet-500/80 hover:bg-violet-500 text-xs font-semibold shadow shadow-violet-500/40">
+            ARGUS Copiloto
+          </button>
+
         </div>
       </header>
 
@@ -383,82 +501,6 @@
                 <div id="timelineList" class="flex-1 overflow-auto text-xs text-slate-300"></div>
               </div>
 
-
-              <!-- ARGUS -->
-              <div class="card p-4 space-y-3">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Decision Engine</p>
-                    <h3 class="text-sm font-semibold text-slate-100">ARGUS</h3>
-                  </div>
-                  <div id="argusStateBadge" class="chip bg-emerald-900/30 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
-                    <span id="argusDot" class="badge-dot bg-emerald-400"></span><span id="argusStateText">STABLE</span>
-                  </div>
-                </div>
-
-                <p id="argusHeadline" class="text-xs text-slate-200">
-                  Operação estável. Nenhuma anomalia relevante detectada.
-                </p>
-
-                <div class="text-xs text-slate-300 space-y-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Condições ambientais</span>
-                    <span id="argusEnvImpact" class="text-slate-200">impacto normal</span>
-                  </div>
-                  <div class="grid grid-cols-3 gap-2 text-[0.70rem]">
-                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
-                      <div class="text-slate-500">Umidade</div>
-                      <div class="font-semibold text-slate-100"><span id="argusHum">--</span>%</div>
-                    </div>
-                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
-                      <div class="text-slate-500">Vento</div>
-                      <div class="font-semibold text-slate-100"><span id="argusWind">--</span> km/h</div>
-                    </div>
-                    <div class="rounded-xl bg-slate-900/40 border border-slate-700/40 p-2">
-                      <div class="text-slate-500">Temp</div>
-                      <div class="font-semibold text-slate-100"><span id="argusTemp">--</span>°C</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="rounded-xl bg-slate-900/35 border border-slate-700/40 p-3">
-                  <div class="flex items-center justify-between text-[0.70rem]">
-                    <span class="text-slate-400">Recomendação</span>
-                    <span id="argusConfidence" class="text-slate-200">Confiança: Alta</span>
-                  </div>
-                  <div class="mt-1 text-xs text-slate-200" id="argusRulLine">Intervenção recomendada em ~— dias (±—).</div>
-                  <ul id="argusReasons" class="mt-2 space-y-1 text-[0.72rem] text-slate-300 list-disc pl-4">
-                    <li>Sem fatores dominantes no momento.</li>
-                  </ul>
-                </div>
-
-                <div class="flex gap-2">
-                  <button id="argusCopilotBtn" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-                    <i class="fa-solid fa-wand-magic-sparkles text-sky-400"></i>
-                    Abrir Copiloto
-                  </button>
-                  <button id="argusWeatherBtn" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-                    <i class="fa-solid fa-cloud-sun text-emerald-300"></i>
-                    Clima Real
-                  </button>
-                </div>
-
-<div class="flex gap-2 mt-2">
-  <button id="argusAnalysisBtn" class="btn w-full hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-    <i class="fa-solid fa-chart-line text-violet-300"></i>
-    Análise Técnica
-  </button>
-  <button id="argusAuditBtn" class="btn w-full hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-    <i class="fa-solid fa-clipboard-list text-amber-300"></i>
-    Auditoria
-  </button>
-</div>
-
-                <p class="text-[0.70rem] text-slate-500">
-                  O ARGUS não “chuta”. Se a confiança for baixa, ele declara explicitamente.
-                </p>
-              </div>
-
               <!-- Manutenção -->
               <div class="card p-4 space-y-3">
                 <div class="flex justify-between items-center">
@@ -537,6 +579,71 @@
             </div>
           </div>
         </section>
+
+      <!-- ARGUS (CARD FIXO) -->
+      <div class="glass rounded-2xl p-4 mt-4" id="argusCard">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-xs uppercase tracking-[0.2em] text-slate-400">ARGUS</div>
+            
+
+      <!-- CENÁRIOS (DEMO) -->
+      <div class="glass rounded-2xl p-4 mt-4" id="demoScenarioCard">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-xs uppercase tracking-[0.2em] text-slate-400">Cenário (Demonstração)</div>
+            <div class="text-sm font-semibold text-slate-100 mt-1">Controle de ambiente</div>
+            <div class="text-xs text-slate-400 mt-1">Use para conduzir o demo: umidade/vento e impacto no risco.</div>
+          </div>
+        </div>
+
+        <select id="demoScenario" class="tg-input mt-3">
+          <option value="normal">Normal</option>
+          <option value="agressivo">Ambiente agressivo</option>
+          <option value="calor">Onda de calor</option>
+          <option value="maresia">Maresia severa</option>
+          <option value="tempestade">Pós-tempestade</option>
+        </select>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button id="demoEventHumidity" class="tg-chip">Provocar: Umidade ↑</button>
+          <button id="demoEventDryWet" class="tg-chip">Provocar: Ciclo seco–úmido</button>
+          <button id="demoEventCritical" class="tg-chip">Provocar: Alerta crítico</button>
+        </div>
+
+        <div class="mt-2 text-[11px] text-slate-500">Ajustes de demo não representam leituras reais de campo.</div>
+      </div>
+
+<div class="flex items-center gap-2"><div class="text-base font-extrabold text-slate-100">Copiloto</div><span id="argusInsightBadge" class="hidden px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-200 border border-emerald-400/20">Insight novo</span></div>
+            <div class="text-xs text-slate-400 mt-1">Pergunte sobre o ativo selecionado: risco, VUE, ambiente e plano de ação.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="argusExpand" class="px-3 py-1.5 rounded-full bg-slate-800/60 hover:bg-slate-800 text-xs font-semibold border border-slate-600/30">
+              Expandir
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 rounded-2xl soft overflow-hidden border border-slate-600/15">
+          <div id="argusMiniThread" class="p-3" style="height:140px; overflow:auto;"></div>
+        </div>
+
+        <div class="mt-3 flex gap-2">
+          <input id="argusMiniInput" class="tg-input" placeholder="Pergunte ao ARGUS..." />
+          <button id="argusMiniSend" class="tg-send" style="height:44px;">Enviar</button>
+        </div>
+
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button class="tg-chip" data-argusq="por que o risco subiu?">Por quê</button>
+          <button class="tg-chip" data-argusq="quando devo agir?">Quando agir</button>
+          <button class="tg-chip" data-argusq="resumo 24h">Resumo 24h</button>
+          <button class="tg-chip" data-argusq="plano de ação">Plano de ação</button>
+        </div>
+
+        <div class="mt-2 text-[11px] text-slate-500">ARGUS usa apenas estados calculados pelo TowerGuard (sem inventar dados).</div>
+      </div>
+
+
 
         <!-- PAGE: RELATÓRIOS -->
         <section id="page-reports" class="page-section space-y-4">
@@ -646,6 +753,38 @@
     </div>
   </div>
 
+  
+  <!-- ARGUS MODAL -->
+  <div id="argusModal" class="tg-modal hidden" role="dialog" aria-modal="true">
+    <div class="tg-modal__backdrop" id="argusBackdrop"></div>
+    <div class="tg-modal__panel">
+      <div class="tg-modal__header">
+        <div>
+          <div class="tg-modal__kicker">ARGUS</div>
+          <div class="tg-modal__title">Copiloto — respostas objetivas</div>
+          <div class="tg-modal__sub">Pergunte sobre o ativo selecionado: risco, VUE, o que mudou no ambiente e planos de ação.</div>
+        </div>
+        <button id="argusClose" class="tg-icon-btn" title="Fechar">✕</button>
+      </div>
+
+      <div class="tg-modal__suggest">
+        Sugestões: “por que o risco subiu?”, “quando devo agir?”, “resumo 24h”, “o que mudou no ambiente?”, “plano de ação”.
+      </div>
+
+      <div class="tg-chat">
+        <div id="argusThread" class="tg-thread" aria-live="polite"></div>
+
+        <div class="tg-inputbar">
+          <input id="argusInput" class="tg-input" placeholder="Pergunte ao ARGUS..." />
+          <button id="argusSend" class="tg-send">Enviar</button>
+        </div>
+
+        <div class="tg-footnote">ARGUS usa apenas estados calculados pelo TowerGuard (sem inventar dados).</div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- TOAST -->
   <div id="toast" class="toast">
     <i class="fa-solid fa-circle-check text-emerald-400"></i>
@@ -723,7 +862,7 @@
     const RISK_LEVELS = {
       moderate: 60,
       high: 90,
-      critical: 130
+      CRÍTICO: 130
     };
 
     const SCENARIOS = {
@@ -815,7 +954,7 @@
         let colorClass = 'text-slate-200';
         if (ev.level === 'info') colorClass = 'text-sky-300';
         else if (ev.level === 'warn') colorClass = 'text-amber-300';
-        else if (ev.level === 'critical') colorClass = 'text-red-400';
+        else if (ev.level === 'CRÍTICO') colorClass = 'text-red-400';
         const wrapper = document.createElement('div');
         wrapper.className = 'flex items-start gap-2 mb-1.5';
         wrapper.innerHTML =
@@ -831,10 +970,11 @@
     function updateEnvWidgets(site) {
       document.getElementById('regionLabel').textContent =
         site.region + ' • ' + site.city;
-      document.getElementById('humidityLabel').textContent =
-        site.humidity.toFixed(0) + '%';
-      document.getElementById('windLabel').textContent =
-        site.wind.toFixed(1) + ' km/h';
+      const demoO = (window.__DEMO_OVERRIDE__ || null);
+      const humV = demoO && typeof demoO.hum === 'number' ? demoO.hum : site.humidity;
+      const windV = demoO && typeof demoO.wind === 'number' ? demoO.wind : site.wind;
+      document.getElementById('humidityLabel').textContent = humV.toFixed(0) + '%';
+      document.getElementById('windLabel').textContent = windV.toFixed(1) + ' km/h';
 
       document.getElementById('mapSite').textContent =
         site.id + ' — ' + site.name;
@@ -975,7 +1115,10 @@
     }
 
     function riskScore(site) {
-      return site.zinc * 0.7 + site.steel * 1.4 + site.envFactor * 10 + site.plateDamage * 0.5;
+      const base = site.zinc * 0.7 + site.steel * 1.4 + site.envFactor * 10 + site.plateDamage * 0.5;
+      const o = (window.__DEMO_OVERRIDE__ || null);
+      const add = o && typeof o.riskDelta === 'number' ? o.riskDelta : 0;
+      return base + add;
     }
 
     function refreshRiskTable() {
@@ -990,7 +1133,7 @@
         const r = riskScore(s);
         let tag = 'Baixo';
         let cls = 'text-emerald-400';
-        if (r > RISK_LEVELS.critical) { tag = 'Crítico'; cls = 'text-red-400'; }
+        if (r > RISK_LEVELS.CRÍTICO) { tag = 'Crítico'; cls = 'text-red-400'; }
         else if (r > RISK_LEVELS.high) { tag = 'Alto'; cls = 'text-orange-400'; }
         else if (r > RISK_LEVELS.moderate) { tag = 'Moderado'; cls = 'text-yellow-300'; }
 
@@ -1020,7 +1163,7 @@
         const s = sites[i];
         const score = riskScore(s);
         let tag = 'Baixo';
-        if (score > RISK_LEVELS.critical) tag = 'Crítico';
+        if (score > RISK_LEVELS.CRÍTICO) tag = 'Crítico';
         else if (score > RISK_LEVELS.high) tag = 'Alto';
         else if (score > RISK_LEVELS.moderate) tag = 'Moderado';
         riskCounts[tag] = (riskCounts[tag] || 0) + 1;
@@ -1094,11 +1237,6 @@
 
     function stepSimulation() {
       const site = sites[currentIndex];
-      // Weather feed (real/sim) influences risk and UI
-      site.humidity = ARGUS.weather.humidity;
-      site.wind = ARGUS.weather.wind;
-      // Maintain per-site history for ARGUS
-      pushHistory(site);
       const sc = SCENARIOS[currentScenario] || SCENARIOS.default;
       const base = site.envFactor * sc.corrosionMultiplier;
 
@@ -1123,10 +1261,10 @@
 
       site.costSaved += 0.06 * base;
 
-            // clima vem do ARGUS.weather (simulado ou real)
-      site.humidity = ARGUS.weather.humidity;
-      site.wind = ARGUS.weather.wind;
-site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.02)));
+      site.humidity = Math.min(98, Math.max(45, site.humidity + (Math.random() * 4 - 2 + sc.humidityDrift * 0.05)));
+      site.wind = Math.min(40, Math.max(0, site.wind + (Math.random() * 3 - 1.5 + sc.windDrift * 0.05)));
+
+      site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.02)));
       site.gwSignal = Math.max(-105, Math.min(-60, site.gwSignal + (Math.random() * 4 - 2)));
 
       lastGwSeenSeconds = 0;
@@ -1135,13 +1273,13 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
         addEvent('warn', 'Zinco em atenção (' + site.id + ')', 'Proteção de zinco entrou em faixa de atenção para o site ' + site.id + '.');
       }
       if (prevZ < THRESHOLDS.zincCritical && site.zinc >= THRESHOLDS.zincCritical) {
-        addEvent('critical', 'Zinco esgotado (' + site.id + ')', 'Proteção de zinco atingiu limite crítico para o site ' + site.id + '.');
+        addEvent('CRÍTICO', 'Zinco esgotado (' + site.id + ')', 'Proteção de zinco atingiu limite crítico para o site ' + site.id + '.');
       }
       if (prevS < THRESHOLDS.steelAttention && site.steel >= THRESHOLDS.steelAttention && site.steel < THRESHOLDS.steelCritical) {
         addEvent('warn', 'Dano em aço em atenção (' + site.id + ')', 'Degradação estrutural entrou em zona de atenção.');
       }
       if (prevS < THRESHOLDS.steelCritical && site.steel >= THRESHOLDS.steelCritical) {
-        addEvent('critical', 'Dano estrutural crítico (' + site.id + ')', 'Dano em aço acima do limite crítico para o site ' + site.id + '.');
+        addEvent('CRÍTICO', 'Dano estrutural crítico (' + site.id + ')', 'Dano em aço acima do limite crítico para o site ' + site.id + '.');
       }
       if (prevPlate < 50 && site.plateDamage >= 50) {
         addEvent('warn', 'Placa sacrificial degradada', 'Placa de sacrifício ultrapassou 50% de dano no site ' + site.id + '.');
@@ -1156,7 +1294,6 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
       updateSensorCards(site);
       refreshRiskTable();
       pushChartPoint(site);
-      updateArgusPanel(site);
     }
 
     function showPage(name) {
@@ -1432,469 +1569,6 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
       });
     }
 
-    
-    // -------------------------
-    // ARGUS — Predictive Decision Engine (demo/local)
-    // -------------------------
-    const ARGUS = {
-      weather: {
-        source: 'sim', // 'sim' | 'real'
-        humidity: 78,
-        wind: 12,
-        temp: 27,
-        lastUpdated: null
-      },
-      config: {
-        useRealWeather: false,
-        owKey: '',
-        owLat: '',
-        owLon: '',
-        fetchEveryMs: 10 * 60 * 1000
-      },
-      lastSnapshot: null,
-      history: {} // per site: { zinc:[], steel:[], plate:[], cu:[], t:[] }
-    };
-
-    function loadArgusConfig() {
-      try {
-        const raw = localStorage.getItem('tw_argus_cfg');
-        if (!raw) return;
-        const cfg = JSON.parse(raw);
-        ARGUS.config = { ...ARGUS.config, ...cfg };
-      } catch (e) {}
-    }
-
-    function saveArgusConfig() {
-      localStorage.setItem('tw_argus_cfg', JSON.stringify(ARGUS.config));
-    }
-
-    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-
-    function updateSimWeather() {
-      // Simulação ambiental com variação lenta (boa para demo)
-      const driftH = (Math.random() * 2.2 - 1.1);
-      const driftW = (Math.random() * 1.8 - 0.9);
-      const driftT = (Math.random() * 0.8 - 0.4);
-      ARGUS.weather.humidity = clamp(ARGUS.weather.humidity + driftH, 45, 98);
-      ARGUS.weather.wind = clamp(ARGUS.weather.wind + driftW, 0, 45);
-      ARGUS.weather.temp = clamp(ARGUS.weather.temp + driftT, 16, 38);
-      ARGUS.weather.source = 'sim';
-      ARGUS.weather.lastUpdated = new Date();
-    }
-
-    async function fetchRealWeatherOnce() {
-      const { owKey, owLat, owLon, useRealWeather } = ARGUS.config;
-      if (!useRealWeather) return false;
-      if (!owKey || !owLat || !owLon) return false;
-
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(owLat)}&lon=${encodeURIComponent(owLon)}&units=metric&appid=${encodeURIComponent(owKey)}`;
-
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('OpenWeather HTTP ' + res.status);
-      const data = await res.json();
-
-      const humidity = data?.main?.humidity;
-      const temp = data?.main?.temp;
-      const windMs = data?.wind?.speed;
-      if (typeof humidity !== 'number' || typeof temp !== 'number' || typeof windMs !== 'number') {
-        throw new Error('OpenWeather payload inesperado');
-      }
-
-      ARGUS.weather.humidity = clamp(humidity, 0, 100);
-      ARGUS.weather.temp = clamp(temp, -30, 60);
-      ARGUS.weather.wind = clamp(windMs * 3.6, 0, 120); // m/s -> km/h
-      ARGUS.weather.source = 'real';
-      ARGUS.weather.lastUpdated = new Date();
-      return true;
-    }
-
-    function startWeatherLoop() {
-      // Atualiza imediatamente e depois em intervalos
-      const tick = async () => {
-        try {
-          if (ARGUS.config.useRealWeather) {
-            await fetchRealWeatherOnce();
-          } else {
-            updateSimWeather();
-          }
-          updateArgusPanel(sites[currentIndex]); // atualizar painel com clima
-        } catch (e) {
-          // Se falhar o real, volta para simulado para não quebrar demo
-          ARGUS.config.useRealWeather = false;
-          saveArgusConfig();
-          updateSimWeather();
-          updateArgusPanel(sites[currentIndex]);
-          showToast('Clima real indisponível — usando simulação');
-        }
-      };
-      tick();
-      setInterval(tick, ARGUS.config.fetchEveryMs);
-    }
-
-    function ensureHistory(siteId) {
-      if (!ARGUS.history[siteId]) {
-        ARGUS.history[siteId] = { zinc: [], steel: [], plate: [], cu: [], t: [] };
-      }
-      return ARGUS.history[siteId];
-    }
-
-    function pushHistory(site) {
-      const h = ensureHistory(site.id);
-      const now = new Date();
-      const t = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-      h.t.push(t);
-      h.cu.push(site.sensorCu);
-      h.zinc.push(site.zinc);
-      h.steel.push(site.steel);
-      h.plate.push(site.plateDamage);
-
-      const MAX = 420; // ~7h em 1.2s/tick (demo). Ajuste fino depois.
-      if (h.t.length > MAX) {
-        h.t.shift(); h.cu.shift(); h.zinc.shift(); h.steel.shift(); h.plate.shift();
-      }
-    }
-
-    function slope(arr, n=30) {
-      // inclinação simples (últimos n pontos)
-      if (!arr || arr.length < Math.max(6, n)) return 0;
-      const a = arr.slice(-n);
-      const x0 = 0, x1 = a.length - 1;
-      const y0 = a[0], y1 = a[a.length - 1];
-      return (y1 - y0) / (x1 - x0);
-    }
-
-    function zscoreLast(arr, n=60) {
-      if (!arr || arr.length < n) return 0;
-      const w = arr.slice(-n);
-      const mean = w.reduce((s,v)=>s+v,0)/w.length;
-      const varr = w.reduce((s,v)=>s+(v-mean)*(v-mean),0)/w.length;
-      const sd = Math.sqrt(varr) || 1;
-      const last = w[w.length-1];
-      return (last - mean) / sd;
-    }
-
-    function envImpact(env) {
-      // Score ambiental 0..1 baseado em umidade + vento + temperatura (simples e explicável)
-      let score = 0;
-      let reasons = [];
-
-      if (env.humidity >= 80) { score += 0.45; reasons.push('Umidade elevada'); }
-      if (env.humidity >= 90) { score += 0.15; reasons.push('Umidade extrema'); }
-
-      if (env.wind >= 14) { score += 0.25; reasons.push('Vento persistente'); }
-      if (env.wind >= 22) { score += 0.10; reasons.push('Vento forte'); }
-
-      if (env.temp >= 30) { score += 0.10; reasons.push('Temperatura alta'); }
-
-      score = clamp(score, 0, 1);
-      return { score, reasons };
-    }
-
-    function computeRulDays(current, critical, slopePerTick, ticksPerDay=1200) {
-      // Demo: converte slope/tick para dias aproximados. Ajustaremos em produção com taxa real (minuto a minuto).
-      if (slopePerTick <= 0.0001) return null;
-      const remaining = Math.max(0, critical - current);
-      const ticks = remaining / slopePerTick;
-      return Math.ceil(ticks / ticksPerDay);
-    }
-
-    function computeArgus(site) {
-      const env = {
-        humidity: ARGUS.weather.humidity,
-        wind: ARGUS.weather.wind,
-        temp: ARGUS.weather.temp
-      };
-
-      const h = ensureHistory(site.id);
-      const zincSlope = slope(h.zinc, 40);
-      const steelSlope = slope(h.steel, 40);
-      const plateSlope = slope(h.plate, 40);
-
-      // RUL (dias) — ajustado por ambiente
-      const envFx = 1 + envImpact(env).score * 0.6; // até +60% de aceleração
-      const zincRul = computeRulDays(site.zinc, THRESHOLDS.zincCritical, zincSlope * envFx);
-      const plateRul = computeRulDays(site.plateDamage, 100, plateSlope * envFx);
-      const steelRul = computeRulDays(site.steel, THRESHOLDS.steelCritical, steelSlope * envFx);
-
-      const rulMin = [zincRul, plateRul, steelRul].filter(v => typeof v === 'number' && isFinite(v)).sort((a,b)=>a-b)[0];
-      const ci = rulMin ? `±${Math.max(2, Math.round(rulMin*0.15))} dias` : '—';
-
-      // Anomalia (Z-score) + drift (inclinação)
-      const zZinc = Math.abs(zscoreLast(h.zinc, 80));
-      const zPlate = Math.abs(zscoreLast(h.plate, 80));
-      const zSteel = Math.abs(zscoreLast(h.steel, 80));
-
-      const anomalies = [];
-      if (zZinc >= 2.2) anomalies.push({ variable:'zinc', type:'desvio', severity: zZinc >= 3.0 ? 'high':'medium', detail:`Z-score ${zZinc.toFixed(1)}`});
-      if (zPlate >= 2.2) anomalies.push({ variable:'plate', type:'desvio', severity: zPlate >= 3.0 ? 'high':'medium', detail:`Z-score ${zPlate.toFixed(1)}`});
-      if (zSteel >= 2.2) anomalies.push({ variable:'steel', type:'desvio', severity: zSteel >= 3.0 ? 'high':'medium', detail:`Z-score ${zSteel.toFixed(1)}`});
-
-      // Estado
-      let state = 'stable';
-      if (site.zinc >= THRESHOLDS.zincCritical || site.steel >= THRESHOLDS.steelCritical) state = 'critical';
-      else if (site.zinc >= THRESHOLDS.zincAttention || site.steel >= THRESHOLDS.steelAttention) state = 'attention';
-      // Eleva para attention por ambiente agravado persistente (diferencial)
-      const envEval = envImpact(env);
-      if (state === 'stable' && envEval.score >= 0.70) state = 'attention';
-
-      // Confiança
-      let confidence = 'Alta';
-      if (h.t.length < 60) confidence = 'Média';
-      if (h.t.length < 25) confidence = 'Baixa';
-
-      // Score (0..100) explicável
-      let score =
-        (site.zinc/120)*35 +
-        (site.steel/100)*35 +
-        (site.plateDamage/100)*20 +
-        (envEval.score)*8 +
-        (anomalies.some(a=>a.severity==='high') ? 2 : 0);
-
-      score = clamp(Math.round(score), 0, 100);
-
-      // Headline direta (sem rodeio)
-      let headline = 'Operação estável. Nenhuma anomalia relevante detectada.';
-      const reasons = [];
-
-      if (state === 'critical') {
-        headline = 'Limite crítico atingido. Ação imediata recomendada.';
-      } else if (state === 'attention') {
-        headline = 'Atenção: cenário agravado ou tendência acelerada detectada.';
-      }
-
-      if (site.zinc >= THRESHOLDS.zincAttention) reasons.push(`Zinco em ${site.zinc.toFixed(1)}% (atenção)`);
-      if (site.zinc >= THRESHOLDS.zincCritical) reasons.push(`Zinco esgotado (${site.zinc.toFixed(1)}%)`);
-      if (site.plateDamage >= 50 && site.plateDamage < 100) reasons.push(`Placa em ${site.plateDamage.toFixed(0)}% (degradação)`);
-      if (site.plateDamage >= 100) reasons.push('Placa sacrificial esgotada (100%)');
-      if (site.steel >= THRESHOLDS.steelAttention) reasons.push(`Aço em ${site.steel.toFixed(1)}% (atenção)`);
-      if (site.steel >= THRESHOLDS.steelCritical) reasons.push(`Aço crítico (${site.steel.toFixed(1)}%)`);
-      envEval.reasons.forEach(r => reasons.push(`Ambiente: ${r.toLowerCase()}`));
-      if (anomalies.length) reasons.push(`Anomalias: ${anomalies.map(a=>`${a.variable}:${a.detail}`).join(', ')}`);
-
-      const envImpactText = envEval.score >= 0.75 ? 'impacto alto' : (envEval.score >= 0.45 ? 'impacto moderado' : 'impacto normal');
-
-      return {
-        site_id: site.id,
-        timestamp: new Date().toISOString(),
-        operational_state: state,
-        confidence,
-        score,
-        env: { ...env, impact: envImpactText, source: ARGUS.weather.source },
-        rul: {
-          zinc_days: zincRul,
-          plate_days: plateRul,
-          steel_days: steelRul,
-          recommended_days: rulMin ?? null,
-          ci
-        },
-        anomalies,
-        reasons
-      };
-    }
-
-    function updateArgusPanel(site) {
-      if (!site) return;
-      const snapshot = computeArgus(site);
-      ARGUS.lastSnapshot = snapshot;
-
-      // badge
-      const badge = document.getElementById('argusStateBadge');
-      const dot = document.getElementById('argusDot');
-      const st = document.getElementById('argusStateText');
-      const headline = document.getElementById('argusHeadline');
-
-      const map = {
-        stable: { text:'STABLE', cls:'bg-emerald-900/30 border-emerald-500/40 text-emerald-300', dot:'bg-emerald-400' },
-        attention: { text:'ATTENTION', cls:'bg-amber-900/30 border-amber-500/40 text-amber-300', dot:'bg-amber-400' },
-        critical: { text:'CRITICAL', cls:'bg-red-900/30 border-red-500/40 text-red-300', dot:'bg-red-400' }
-      };
-      const m = map[snapshot.operational_state] || map.stable;
-      badge.className = `chip ${m.cls} flex items-center gap-1`;
-      dot.className = `badge-dot ${m.dot}`;
-      st.textContent = m.text;
-      headline.textContent = snapshot.reasons.length ? snapshot.reasons[0].includes('Zinco') || snapshot.reasons[0].includes('Aço') ? snapshot.reasons[0] : snapshot.operational_state === 'stable' ? 'Operação estável. Nenhuma anomalia relevante detectada.' : headline.textContent : headline.textContent;
-      // headline mais direta
-      headline.textContent = snapshot.operational_state === 'critical'
-        ? 'Limite crítico atingido. Ação imediata recomendada.'
-        : snapshot.operational_state === 'attention'
-          ? 'Atenção: cenário agravado ou tendência acelerada detectada.'
-          : 'Operação estável. Nenhuma anomalia relevante detectada.';
-
-      // env
-      document.getElementById('argusHum').textContent = snapshot.env.humidity.toFixed(0);
-      document.getElementById('argusWind').textContent = snapshot.env.wind.toFixed(0);
-      document.getElementById('argusTemp').textContent = snapshot.env.temp.toFixed(0);
-      document.getElementById('argusEnvImpact').textContent = `${snapshot.env.impact} (${snapshot.env.source})`;
-
-      // RUL line
-      const rec = snapshot.rul.recommended_days;
-      document.getElementById('argusRulLine').textContent =
-        rec ? `Intervenção recomendada em ~${rec} dias (${snapshot.rul.ci}).`
-            : 'Intervenção recomendada em ~— dias (±—).';
-
-      // confidence
-      document.getElementById('argusConfidence').textContent = `Confiança: ${snapshot.confidence}`;
-
-      // reasons list
-      const ul = document.getElementById('argusReasons');
-      ul.innerHTML = '';
-      const top = snapshot.reasons.slice(0, 4);
-      (top.length ? top : ['Sem fatores dominantes no momento.']).forEach(r => {
-        const li = document.createElement('li');
-        li.textContent = r;
-        ul.appendChild(li);
-      });
-    }
-
-    function copilotReply(question) {
-      const s = ARGUS.lastSnapshot;
-      if (!s) return 'Ainda não tenho dados suficientes. Inicie a simulação.';
-      const q = (question || '').toLowerCase();
-
-      if (q.includes('por que') || q.includes('porque') || q.includes('motivo')) {
-        const top = s.reasons.slice(0,3);
-        return top.length
-          ? `Risco ${s.score}/100. Motivos principais: ${top.join('; ')}. Confiança: ${s.confidence}.`
-          : `Risco ${s.score}/100. Nenhum fator dominante. Confiança: ${s.confidence}.`;
-      }
-
-      if (q.includes('quando') || q.includes('agir') || q.includes('manutenção') || q.includes('interven')) {
-        const rec = s.rul.recommended_days;
-        if (!rec) return `Não consigo estimar RUL com confiança agora. Confiança: ${s.confidence}.`;
-        const details = [];
-        if (typeof s.rul.plate_days === 'number') details.push(`Placa: ~${s.rul.plate_days}d`);
-        if (typeof s.rul.zinc_days === 'number') details.push(`Zinco: ~${s.rul.zinc_days}d`);
-        if (typeof s.rul.steel_days === 'number') details.push(`Aço: ~${s.rul.steel_days}d`);
-        return `Intervenção recomendada em ~${rec} dias (${s.rul.ci}). ${details.join(' | ')}. Confiança: ${s.confidence}.`;
-      }
-
-      if (q.includes('ambiente') || q.includes('clima') || q.includes('umidade') || q.includes('vento') || q.includes('temper')) {
-        return `Ambiente atual: umidade ${s.env.humidity.toFixed(0)}%, vento ${s.env.wind.toFixed(0)} km/h, temp ${s.env.temp.toFixed(0)}°C. Impacto: ${s.env.impact}. Fonte: ${s.env.source}.`;
-      }
-
-      if (q.includes('resumo') || q.includes('24h') || q.includes('últimas') || q.includes('ultimas')) {
-        const anomalies = s.anomalies.length ? `${s.anomalies.length} anomalia(s) detectada(s)` : 'nenhuma anomalia relevante';
-        return `Estado: ${s.operational_state.toUpperCase()} | Risco: ${s.score}/100 | ${anomalies} | Ambiente: ${s.env.impact} (${s.env.source}) | Confiança: ${s.confidence}.`;
-      }
-
-      return `Estado: ${s.operational_state.toUpperCase()} | Risco ${s.score}/100 | Recom.: ${s.rul.recommended_days ? '~'+s.rul.recommended_days+' dias' : '—'} | Confiança: ${s.confidence}. Pergunte “por que”, “quando agir” ou “ambiente”.`;
-    }
-
-    function appendChat(role, text) {
-      const chat = document.getElementById('argusChat');
-      const wrap = document.createElement('div');
-      wrap.className = role === 'user'
-        ? 'flex justify-end'
-        : 'flex justify-start';
-
-      const bubble = document.createElement('div');
-      bubble.className = role === 'user'
-        ? 'max-w-[85%] rounded-2xl bg-sky-600 text-white px-3 py-2'
-        : 'max-w-[85%] rounded-2xl bg-slate-900/60 border border-slate-700/40 text-slate-100 px-3 py-2';
-
-      bubble.textContent = text;
-      wrap.appendChild(bubble);
-      chat.appendChild(wrap);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function initArgusUi() {
-      // Copilot modal handlers
-      const modal = document.getElementById('argusModal');
-      const openBtn = document.getElementById('argusCopilotBtn');
-      const closeBtn = document.getElementById('argusModalClose');
-      const sendBtn = document.getElementById('argusSend');
-      const input = document.getElementById('argusInput');
-
-      const open = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); input.focus(); };
-      const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
-
-      if (openBtn) openBtn.addEventListener('click', () => {
-        document.getElementById('argusChat').innerHTML = '';
-        appendChat('assistant', 'ARGUS online. Faça sua pergunta.');
-        open();
-      });
-      if (closeBtn) closeBtn.addEventListener('click', close);
-      modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-
-      const send = () => {
-        const q = input.value.trim();
-        if (!q) return;
-        appendChat('user', q);
-        input.value = '';
-        const a = copilotReply(q);
-        appendChat('assistant', a);
-      };
-      if (sendBtn) sendBtn.addEventListener('click', send);
-      if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
-
-      // Weather modal handlers
-      const wModal = document.getElementById('weatherModal');
-      const wOpen = document.getElementById('argusWeatherBtn');
-      const wClose = document.getElementById('weatherModalClose');
-      const wSave = document.getElementById('weatherSave');
-      const wClear = document.getElementById('weatherClear');
-
-      const owKey = document.getElementById('owKey');
-      const owLat = document.getElementById('owLat');
-      const owLon = document.getElementById('owLon');
-      const useReal = document.getElementById('useRealWeather');
-      const wStatus = document.getElementById('weatherStatus');
-
-      const wOpenFn = () => { wModal.classList.remove('hidden'); wModal.classList.add('flex'); };
-      const wCloseFn = () => { wModal.classList.add('hidden'); wModal.classList.remove('flex'); };
-
-      if (wOpen) wOpen.addEventListener('click', () => {
-        owKey.value = ARGUS.config.owKey || '';
-        owLat.value = ARGUS.config.owLat || '';
-        owLon.value = ARGUS.config.owLon || '';
-        useReal.checked = !!ARGUS.config.useRealWeather;
-        wStatus.textContent = ARGUS.config.useRealWeather ? 'Clima real ativado.' : 'Clima simulado ativo.';
-        wOpenFn();
-      });
-      if (wClose) wClose.addEventListener('click', wCloseFn);
-      wModal.addEventListener('click', (e) => { if (e.target === wModal) wCloseFn(); });
-
-      if (wSave) wSave.addEventListener('click', async () => {
-        ARGUS.config.owKey = owKey.value.trim();
-        ARGUS.config.owLat = owLat.value.trim();
-        ARGUS.config.owLon = owLon.value.trim();
-        ARGUS.config.useRealWeather = !!useReal.checked;
-        saveArgusConfig();
-
-        if (ARGUS.config.useRealWeather) {
-          wStatus.textContent = 'Testando OpenWeather...';
-          try {
-            await fetchRealWeatherOnce();
-            wStatus.textContent = 'OK. Clima real ativo.';
-            showToast('Clima real ativado');
-          } catch (e) {
-            ARGUS.config.useRealWeather = false;
-            saveArgusConfig();
-            wStatus.textContent = 'Falhou. Verifique a key/lat/lon. Voltando para simulado.';
-            showToast('Falha no clima real');
-          }
-        } else {
-          wStatus.textContent = 'Clima simulado ativo.';
-          showToast('Clima simulado ativo');
-        }
-        updateArgusPanel(sites[currentIndex]);
-      });
-
-      if (wClear) wClear.addEventListener('click', () => {
-        ARGUS.config.useRealWeather = false;
-        ARGUS.config.owKey = '';
-        ARGUS.config.owLat = '';
-        ARGUS.config.owLon = '';
-        saveArgusConfig();
-        owKey.value = ''; owLat.value = ''; owLon.value = ''; useReal.checked = false;
-        wStatus.textContent = 'Configuração limpa. Clima simulado ativo.';
-        showToast('Configuração limpa');
-      });
-    }
-
-
     document.addEventListener('DOMContentLoaded', function() {
       initSiteSelect();
       initClock();
@@ -1903,15 +1577,11 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
       initRegisterForm();
       initScenarioSelect();
       initChart();
-      loadArgusConfig();
-      initArgusUi();
-      startWeatherLoop();
 
       const site = sites[currentIndex];
       updateHeader(site);
       updateSensorCards(site);
       refreshRiskTable();
-      updateArgusPanel(site);
 
       for (let i = 0; i < 10; i++) {
         stepSimulation();
@@ -1919,879 +1589,934 @@ site.gwBattery = Math.max(40, Math.min(100, site.gwBattery - (Math.random() * 0.
 
       addEvent('info', 'Monitoramento iniciado', 'Simulação local do parque TowerGuard carregada.');
     });
-  </script>
+  
+    /* ---------------- ARGUS (Copiloto) ---------------- */
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-  <!-- ARGUS Copilot Modal -->
-  <div id="argusModal" class="fixed inset-0 hidden items-center justify-center bg-slate-950/70 p-4 z-[9999]">
-    <div class="w-full max-w-2xl rounded-2xl bg-slate-950/90 border border-slate-700/60 shadow-2xl">
-      <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
-        <div>
-          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">ARGUS</div>
-          <div class="text-slate-100 font-semibold">Copiloto — respostas objetivas</div>
-        </div>
-        <button id="argusModalClose" class="btn bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="p-4 space-y-3">
-        <div class="text-xs text-slate-400">
-          Sugestões: “por que o risco subiu?”, “quando devo agir?”, “resumo 24h”, “o que mudou no ambiente?”
-        </div>
-        <div id="argusChat" class="h-64 overflow-auto rounded-xl bg-slate-900/30 border border-slate-700/40 p-3 text-sm text-slate-200 space-y-2"></div>
-        <div class="flex gap-2">
-          <input id="argusInput" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-sky-500/60" placeholder="Pergunte ao ARGUS..." />
-          <button id="argusSend" class="btn bg-sky-600 hover:bg-sky-500 text-white">
-            Enviar
-          </button>
-        </div>
-        <div class="text-[0.70rem] text-slate-500">
-          Copiloto usa apenas estados calculados pelo TowerGuard (sem inventar dados).
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Weather Config Modal -->
-  <div id="weatherModal" class="fixed inset-0 hidden items-center justify-center bg-slate-950/70 p-4 z-[9999]">
-    <div class="w-full max-w-xl rounded-2xl bg-slate-950/90 border border-slate-700/60 shadow-2xl">
-      <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
-        <div>
-          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Clima Real</div>
-          <div class="text-slate-100 font-semibold">OpenWeather (opcional)</div>
-        </div>
-        <button id="weatherModalClose" class="btn bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="p-4 space-y-3 text-sm text-slate-200">
-        <p class="text-slate-300">
-          Para usar clima real, informe uma chave da OpenWeather e a posição (lat/lon). Se ficar vazio, o ARGUS usa clima simulado.
-        </p>
-        <div class="grid grid-cols-1 gap-2">
-          <label class="text-xs text-slate-400">OpenWeather API Key</label>
-          <input id="owKey" class="rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="Cole sua API key aqui" />
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs text-slate-400">Latitude</label>
-            <input id="owLat" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="-12.97" />
-          </div>
-          <div>
-            <label class="text-xs text-slate-400">Longitude</label>
-            <input id="owLon" class="w-full rounded-xl bg-slate-900/40 border border-slate-700/50 px-3 py-2 text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/60" placeholder="-38.50" />
-          </div>
-        </div>
-        <div class="flex items-center justify-between rounded-xl bg-slate-900/30 border border-slate-700/40 p-3">
-          <div>
-            <div class="text-slate-100 font-semibold text-sm">Usar clima real</div>
-            <div class="text-[0.75rem] text-slate-400">Quando desativado, roda clima simulado controlável para demo.</div>
-          </div>
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="useRealWeather" class="sr-only peer">
-            <div class="relative w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:bg-emerald-600">
-              <div class="absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
-            </div>
-          </label>
-        </div>
-        <div class="flex gap-2">
-          <button id="weatherSave" class="btn w-full bg-emerald-600 hover:bg-emerald-500 text-white">Salvar</button>
-          <button id="weatherClear" class="btn w-full bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">Limpar</button>
-        </div>
-        <p id="weatherStatus" class="text-[0.75rem] text-slate-400"></p>
-      </div>
-    </div>
-  </div>
-
-
-<script>
-/* ===== TowerGuard ARGUS — Clima por Ativo + Alertas Ambientais Persistentes (V1) =====
-   - Funciona com OpenWeather (se chave configurada) ou fallback simulado
-   - Mantém histórico por site e dispara alertas preditivos (antes do sensor)
-   - Não substitui seu motor: apenas alimenta ARGUS_INPUT.environment e adiciona eventos
-*/
-(function(){
-  // ---------- Util ----------
-  const nowISO = () => new Date().toISOString();
-  const fmtBR = (d) => new Date(d).toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
-  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
-
-  // ---------- Sites (lat/lon) ----------
-  // Se você já tiver SITES no código, este bloco respeita o existente.
-  window.SITES = window.SITES || [
-    { id: "EV-BA-01", name: "Boca do Rio - BA", iso: "C5-M", lat: -12.9797, lon: -38.5016 },
-    { id: "EV-RJ-01", name: "Copacabana - RJ", iso: "C5-M", lat: -22.9711, lon: -43.1822 },
-    { id: "EV-SP-01", name: "Santos - SP", iso: "C5-M", lat: -23.9618, lon: -46.3322 }
-  ];
-  window.selectedSiteId = window.selectedSiteId || window.SITES[0].id;
-  function getSelectedSite(){
-    return (window.SITES || []).find(s=>s.id===window.selectedSiteId) || window.SITES[0];
-  }
-
-  // ---------- API Key ----------
-  function getOpenWeatherKey(){ return localStorage.getItem("OPENWEATHER_API_KEY") || ""; }
-  function setOpenWeatherKey(k){ localStorage.setItem("OPENWEATHER_API_KEY", (k||"").trim()); }
-  function hasKey(){ return !!getOpenWeatherKey(); }
-
-  // ---------- Cache ----------
-  const WEATHER_CACHE = new Map(); // siteId -> {ts,data}
-  const WEATHER_TTL_MS = 10*60*1000; // 10 min
-
-  async function fetchWeatherForSite(site){
-    const apiKey = getOpenWeatherKey();
-    if(!apiKey) return null;
-
-    const cached = WEATHER_CACHE.get(site.id);
-    const t = Date.now();
-    if(cached && (t - cached.ts) < WEATHER_TTL_MS) return cached.data;
-
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${site.lat}&lon=${site.lon}&units=metric&appid=${apiKey}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("OpenWeather "+res.status);
-    const data = await res.json();
-
-    const weather = {
-      humidity: data?.main?.humidity ?? null,
-      temperature: data?.main?.temp ?? null,
-      wind_kmh: ((data?.wind?.speed ?? 0) * 3.6),
-      wind_deg: data?.wind?.deg ?? null,
-      source: "openweather",
-      fetched_at: nowISO()
+    const argus = {
+      open: false,
+      initDone: false,
     };
-    WEATHER_CACHE.set(site.id,{ts:t,data:weather});
-    return weather;
-  }
 
-  function simulatedWeatherForSite(site){
-    // Seed por site para diferenciar comportamento
-    const seed = Math.abs(Math.floor((site.lat*1000 + site.lon*1000)));
-    const baseHum = 70 + (seed % 12);
-    const baseWind = 10 + (Math.floor(seed/7) % 8);
-    const hum = clamp(baseHum + (Math.random()*12), 40, 98);
-    const wind = clamp(baseWind + (Math.random()*10), 0, 40);
-    const temp = clamp(24 + (Math.random()*7), 10, 38);
-    return {
-      humidity: hum,
-      temperature: temp,
-      wind_kmh: wind,
-      wind_deg: Math.floor(Math.random()*360),
-      source: "simulated",
-      fetched_at: nowISO()
-    };
-  }
+    function el(id){ return document.getElementById(id); }
+    function nowTime(){
+      const d = new Date();
+      return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    }
+    function addArgusMsg(who, text){
+      const thread = el('argusThread');
+      if(!thread) return;
+      const msg = document.createElement('div');
+      msg.className = 'tg-msg ' + (who === 'user' ? 'tg-msg--user' : 'tg-msg--argus');
+      msg.innerHTML = `<div class="tg-msg__meta">${who==='user'?'Você':'ARGUS'} • ${nowTime()}</div>
+                       <div class="tg-msg__text">${escapeHtml(String(text))}</div>`;
+      thread.appendChild(msg);
+      thread.scrollTop = thread.scrollHeight;
+    }
 
-  // ---------- UI Injection (Site select + Env card) ----------
-  function ensureEnvUI(){
-    // env card
-    if(!document.getElementById("envCard")){
-      const card = document.createElement("div");
-      card.id = "envCard";
-      card.className = "card p-4 space-y-2";
-      card.innerHTML = `
-        <div class="flex items-center justify-between">
-          <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">Condições Ambientais (Site)</p>
-          <span id="envSource" class="text-[0.65rem] text-slate-400">—</span>
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div><p class="text-xs text-slate-400">Umidade</p><p class="text-lg font-semibold" id="envHumidity">—%</p></div>
-          <div><p class="text-xs text-slate-400">Vento</p><p class="text-lg font-semibold" id="envWind">— km/h</p></div>
-          <div><p class="text-xs text-slate-400">Temp.</p><p class="text-lg font-semibold" id="envTemp">— °C</p></div>
-        </div>
-        <p class="text-xs text-slate-400" id="envUpdated">Atualização: —</p>
-        <div class="flex items-center gap-2 pt-2">
-          <button id="btnSetWeatherKey" class="px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-200 text-xs">Configurar Clima Real</button>
-          <span class="text-[0.70rem] text-slate-400" id="envKeyHint"></span>
-        </div>
-      `;
-      // tenta inserir na coluna direita do dashboard
-      const candidates = [
-        document.querySelector("#rightColumn"),
-        document.querySelector("[data-right-column]"),
-        document.querySelector(".right-column"),
-        document.querySelector(".col-right"),
-        document.querySelector("#rightPanel"),
-        document.querySelector("aside + main + aside"), // heurística
-      ].filter(Boolean);
+    function getCurrentSite(){
+      const sel = el('siteSelect');
+      const siteId = sel ? sel.value : (sites[0]?.id || '');
+      return sites.find(s => s.id === siteId) || sites[0];
+    }
 
-      if(candidates[0]){
-        candidates[0].prepend(card);
-      } else {
-        // fallback: fixa no canto inferior direito (não quebra layout)
-        card.style.position="fixed";
-        card.style.right="18px";
-        card.style.bottom="18px";
-        card.style.width="360px";
-        card.style.zIndex="9999";
-        card.style.backdropFilter="blur(10px)";
-        document.body.appendChild(card);
+    function readDashboardSnapshot(){
+      const site = getCurrentSite();
+      // Values already computed by existing simulation update loop
+      const iis = parseFloat((el('iisLabel')?.textContent || '0').replace('/100','')) || calcIIS(site);
+      const iso = el('isoText')?.textContent || '';
+      const city = site?.city || '';
+      const region = site?.region || '';
+      const cuMv = (el('cuValueLabel')?.textContent || '').trim(); // e.g. "24.07 mV"
+      const cuDamage = el('cuDamageLabel')?.textContent || '--%';
+      const zinc = el('zincLevelLabel')?.textContent || '--%';
+      const steel = el('steelLevelLabel')?.textContent || '--%';
+      const hum = el('humidityLabel')?.textContent || '--%';
+      const wind = el('windLabel')?.textContent || '--';
+      const vue = el('rulLabel')?.textContent || '--'; // VUE proteção
+      const Risco = Math.round((typeof riskScore === 'function' ? riskScore(site) : Math.max(0, Math.min(100, 100 - iis))));
+
+      const maint = el('maintText')?.textContent?.trim() || '';
+      const maintTag = el('maintBadge')?.textContent?.trim() || '';
+
+      return {
+        site_id: site?.id,
+        site_name: site?.name,
+        city, region,
+        iso, iis, Risco,
+        cuMv, cuDamage, zinc, steel,
+        hum, wind, vue,
+        maint, maintTag
+      };
+    }
+
+    function classifyState(Risco){
+      if(Risco >= RISK_LEVELS.CRÍTICO) return 'CRÍTICO';
+      if(Risco >= RISK_LEVELS.ATENÇÃO) return 'ATENÇÃO';
+      return 'ESTÁVEL';
+    }
+
+    function argusGreeting(){
+      const h = new Date().getHours();
+      const greet = (h < 12) ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
+      return `${greet}. Quais dados do ativo você deseja agora?`;
+    }
+
+    function argusOffTopic(){
+      return 'Não possuo informações fora do TowerGuard. Posso ajudar com risco, VUE, ambiente (umidade/vento) e planos de ação do ativo selecionado.';
+    }
+
+    function argusPlan(snapshot){
+      // Keep simple: use existing maint block + a tiny recommendation
+      const st = classifyState(snapshot.Risco);
+      if(st === 'CRÍTICO'){
+        return `Prioridade sugerida:\n• Acionar inspeção imediata no ativo ${snapshot.site_id}\n• Planejar intervenção na proteção (Zinco) conforme VUE\n• Registrar evidência (foto/vídeo) e abrir ordem de serviço\n\nContexto: Risco ${Math.round(snapshot.Risco)}/100 | VUE ${snapshot.vue}.`;
+      }
+      if(st === 'ATENÇÃO'){
+        return `Atenção sugerida:\n• Acompanhar tendência nas próximas 24–72h\n• Programar janela de manutenção caso a tendência continue\n• Revisar exposição ambiental (umidade/vento) e histórico recente\n\nContexto: Risco ${Math.round(snapshot.Risco)}/100 | VUE ${snapshot.vue}.`;
+      }
+      return `Rotina sugerida:\n• Manter monitoramento contínuo\n• Revisar semanalmente eventos e tendência\n\nContexto: Risco ${Math.round(snapshot.Risco)}/100 | VUE ${snapshot.vue}.`;
+    }
+
+    function argusWhy(snapshot){
+      const st = classifyState(snapshot.Risco);
+      const lines = [];
+      lines.push(`Ativo: ${snapshot.site_id} — ${snapshot.site_name}`);
+      lines.push(`Estado: ${st} | Risco: ${snapshot.Risco}/100 | Índice de Integridade: ${snapshot.iis.toFixed(0)}/100`);
+      lines.push(`Ambiente: Umidade ${snapshot.hum} | Vento ${snapshot.wind}`);
+      lines.push(`Sensor (Cobre): ${snapshot.cuMv} | Nível acumulado: ${snapshot.cuDamage}`);
+      lines.push(`Impacto estimado: Proteção (Zinco) ${snapshot.zinc} | Estrutura (Aço) ${snapshot.steel} | VUE ${snapshot.vue}`);
+      lines.push(`Leitura: o sensor indica agressividade ambiental; o TowerGuard estima o impacto na proteção e no risco estrutural.`);
+      return lines.join('\n');
+    }
+
+    function argusWhenToAct(snapshot){
+      const st = classifyState(snapshot.Risco);
+      if(st === 'CRÍTICO') return `Agora. O ativo está em CRÍTICO (risco ${snapshot.Risco}/100). Recomendo acionar inspeção e executar plano de ação imediatamente.`;
+      if(st === 'ATENÇÃO') return `Em breve. O ativo está em ATENÇÃO (risco ${snapshot.Risco}/100). Sugiro acompanhar 24–72h e preparar janela de manutenção.`;
+      return `Não é necessário agir agora. Estado ESTÁVEL (risco ${snapshot.Risco}/100). Manter monitoramento e revisar periodicamente.`;
+    }
+
+    function argusRegionDisambiguation(q){
+      const up = q.toUpperCase();
+      const regionHits = [];
+      if(/\bSP\b/.test(up) || /\bS[ÃA]O\s*PAULO\b/.test(up)) regionHits.push('SP');
+      if(/\bRJ\b/.test(up) || /\bRIO\b/.test(up)) regionHits.push('RJ');
+      if(/\bNE\b/.test(up) || /\bNORDESTE\b/.test(up)) regionHits.push('NE');
+      if(/\bSUL\b/.test(up)) regionHits.push('SUL');
+      return regionHits;
+    }
+
+    function argusAnswer(q){
+      const t = (q || '').trim();
+      if(!t) return 'Me diga o que você quer analisar (ex.: “por que o risco subiu?”, “quando devo agir?”, “plano de ação”).';
+
+      const low = t.toLowerCase();
+      if(/^(oi|ol[aá]|bom dia|boa tarde|boa noite)\b/.test(low)) return argusGreeting();
+
+      // Region disambiguation (SP/RJ/NE/SUL)
+      const regions = argusRegionDisambiguation(t);
+      if(regions.length){
+        return `Você está se referindo a ativos na região ${regions.join(', ')}? Se sim, diga “listar ativos em ${regions[0]}” ou “selecionar ativo EV-XX-YY”.`;
+      }
+
+      // Off-topic examples
+      if(low.includes('estado de') || low.includes('política') || low.includes('futebol') || low.includes('economia')){
+        return argusOffTopic();
+      }
+
+      const snap = readDashboardSnapshot();
+
+      if(low.includes('plano') || low.includes('proced') || low.includes('ação') || low.includes('acao')){
+        return argusPlan(snap);
+      }
+      if(low.includes('por que') || low.includes('porque') || low.includes('motivo') || low.includes('o que mudou')){
+        return argusWhy(snap);
+      }
+      if(low.includes('quando') || low.includes('devo agir') || low.includes('agir')){
+        return argusWhenToAct(snap);
+      }
+      if(low.includes('resumo') || low.includes('24h') || low.includes('24 h')){
+        return `Resumo (ativo selecionado): Risco ${snap.Risco}/100 | VUE ${snap.vue} | Umidade ${snap.hum} | Vento ${snap.wind} | Cu ${snap.cuMv} (${snap.cuDamage}).`;
+      }
+      if(low.includes('clima') || low.includes('umidade') || low.includes('vento') || low.includes('temperatura')){
+        return `Ambiente no ativo ${snap.site_id}: Umidade ${snap.hum} | Vento ${snap.wind}. (Clima é usado para explicar variações de agressividade ambiental.)`;
+      }
+
+      return `Posso ajudar com: “por que o risco subiu?”, “quando devo agir?”, “resumo 24h”, “ambiente” e “plano de ação”.`;
+    }
+
+    function openArgus(){
+      setArgusBadge(false);
+
+      const modal = el('argusModal');
+      if(!modal) return;
+      modal.classList.remove('hidden');
+      el('argusInput')?.focus();
+      if(!argus.initDone){
+        addArgusMsg('argus','ARGUS online. Estado do ativo carregado. O que deseja analisar agora?');
+        argus.initDone = true;
+      }
+    }
+    function closeArgus(){
+      const modal = el('argusModal');
+      if(!modal) return;
+      modal.classList.add('hidden');
+    }
+    function sendArgus(){
+      try{
+        const input = el('argusInput');
+      const q = input?.value || '';
+      if(input) input.value = '';
+      addArgusMsg('user', q);
+      addArgusMsg('argus', argusAnswer(q));
+      }catch(err){
+        console.error("ARGUS error", err);
+        addArgusMsg('argus', "Falha ao processar a mensagem. Abra o console para detalhes.");
       }
     }
 
-    // site select (se não existir)
-    if(!document.getElementById("siteSelect")){
-      const sel = document.createElement("select");
-      sel.id = "siteSelect";
-      sel.className = "px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-200 text-sm";
-      // tenta colocar no header
-      const headerTarget = document.querySelector("header") || document.querySelector(".topbar") || document.body;
-      const wrap = document.createElement("div");
-      wrap.className = "flex items-center gap-2";
-      const label = document.createElement("span");
-      label.className = "text-xs text-slate-400";
-      label.textContent = "Ativo:";
-      wrap.appendChild(label);
-      wrap.appendChild(sel);
-      headerTarget.appendChild(wrap);
-    }
-  }
+    // Wire up handlers after DOM ready (already in your existing DOMContentLoaded)
+    // We'll attach here safely:
+    setTimeout(function(){
+      el('btnArgus')?.addEventListener('click', openArgus);
+      el('argusClose')?.addEventListener('click', closeArgus);
+      el('argusBackdrop')?.addEventListener('click', closeArgus);
+      el('argusSend')?.addEventListener('click', sendArgus);
+      el('argusInput')?.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){ e.preventDefault(); sendArgus(); }
+        if(e.key === 'Escape'){ e.preventDefault(); closeArgus(); }
+      });
+    }, 0);
 
-  function initSiteSelect(){
-    const el = document.getElementById("siteSelect");
-    if(!el) return;
-    el.innerHTML = (window.SITES||[]).map(s=>`<option value="${s.id}">${s.name} (${s.iso})</option>`).join("");
-    el.value = window.selectedSiteId;
-    el.addEventListener("change", async (e)=>{
-      window.selectedSiteId = e.target.value;
-      await refreshSiteContext(true);
-    });
-  }
 
-  function wireKeyButton(){
-    const btn = document.getElementById("btnSetWeatherKey");
-    if(!btn) return;
-    btn.onclick = ()=>{
-      const curr = getOpenWeatherKey();
-      const k = prompt("Cole sua chave da OpenWeather API (fica salva só no seu navegador):", curr || "");
-      if(k===null) return;
-      setOpenWeatherKey(k);
-      refreshSiteContext(true);
-    };
-  }
 
-  // ---------- ENV history per site ----------
-  const ENV_HISTORY = {}; // siteId -> array of {ts,humidity,wind_kmh,temperature,source}
-  const ENV_ALERT_STATE = {}; // siteId -> { aggravated:boolean, last:{[type]:ts} }
-
-  function recordEnv(siteId, env){
-    ENV_HISTORY[siteId] = ENV_HISTORY[siteId] || [];
-    ENV_HISTORY[siteId].push({
-      ts: Date.now(),
-      humidity: env.humidity,
-      wind_kmh: env.wind_kmh,
-      temperature: env.temperature,
-      source: env.source
-    });
-    // manter 7 dias (minuto a minuto) ~10080 pontos, mas aqui é por atualização climática (10 min). manter 7d mesmo assim.
-    const cutoff = Date.now() - (7*24*60*60*1000);
-    while(ENV_HISTORY[siteId].length && ENV_HISTORY[siteId][0].ts < cutoff) ENV_HISTORY[siteId].shift();
-  }
-
-  function sliceWindow(siteId, minutes){
-    const arr = ENV_HISTORY[siteId] || [];
-    const cutoff = Date.now() - minutes*60*1000;
-    return arr.filter(p=>p.ts>=cutoff);
-  }
-
-  function coverageAbove(points, field, threshold){
-    if(!points.length) return 0;
-    let c=0;
-    for(const p of points){ if((p[field] ?? -Infinity) >= threshold) c++; }
-    return c / points.length;
-  }
-
-  function avg(points, field){
-    if(!points.length) return null;
-    let s=0,n=0;
-    for(const p of points){
-      const v = p[field];
-      if(typeof v==="number" && !Number.isNaN(v)){ s+=v; n++; }
-    }
-    return n? s/n : null;
-  }
-
-  function addTimelineEvent(level, title, desc){
-    // tenta usar função existente
-    if(typeof window.addEvent === "function"){
-      // compat: alguns dashboards usam addEvent(level,title,desc)
-      try { window.addEvent(level, title, desc); return; } catch(e){}
-    }
-    // fallback: log
-    console.log("[EVENT]", level, title, desc);
-  }
-
-  function throttle(siteId, key, minMinutes){
-    ENV_ALERT_STATE[siteId] = ENV_ALERT_STATE[siteId] || { aggravated:false, last:{} };
-    const last = ENV_ALERT_STATE[siteId].last[key] || 0;
-    const ok = (Date.now() - last) >= (minMinutes*60*1000);
-    if(ok) ENV_ALERT_STATE[siteId].last[key] = Date.now();
-    return ok;
-  }
-
-  function evaluateEnvAlerts(site){
-    const siteId = site.id;
-    ENV_ALERT_STATE[siteId] = ENV_ALERT_STATE[siteId] || { aggravated:false, last:{} };
-
-    const w6h = sliceWindow(siteId, 6*60);   // 6h
-    const w3h = sliceWindow(siteId, 3*60);   // 3h
-    const humCov6h = coverageAbove(w6h, "humidity", 80);
-    const windCov6h = coverageAbove(w6h, "wind_kmh", 14);
-    const humAvg6h = avg(w6h, "humidity");
-    const windAvg6h = avg(w6h, "wind_kmh");
-
-    // critérios: persistência (cobertura) + mínimos para evitar falso positivo
-    const humPersistent = (w6h.length >= 4) && (humCov6h >= 0.75);   // >=75% das amostras em 6h
-    const windPersistent = (w6h.length >= 4) && (windCov6h >= 0.60); // >=60% das amostras em 6h
-
-    const aggravatedNow = humPersistent && windPersistent;
-
-    // Normalização: últimas 3h abaixo dos thresholds com folga
-    const humCov3h = coverageAbove(w3h, "humidity", 78);
-    const windCov3h = coverageAbove(w3h, "wind_kmh", 12);
-    const normalizedNow = (w3h.length >= 2) && (humCov3h < 0.30) && (windCov3h < 0.30);
-
-    // Disparos
-    if(aggravatedNow && !ENV_ALERT_STATE[siteId].aggravated && throttle(siteId,"env_aggravated",120)){
-      ENV_ALERT_STATE[siteId].aggravated = true;
-      addTimelineEvent("warning",
-        "Cenário ambiental agravado",
-        `Persistência 6h: umidade ≥80% (${Math.round(humCov6h*100)}%), vento ≥14 km/h (${Math.round(windCov6h*100)}%). Médias: ${humAvg6h?Math.round(humAvg6h):"--"}% / ${windAvg6h?Math.round(windAvg6h):"--"} km/h.`
-      );
+    /* ---------------- ARGUS (CARD FIXO) ---------------- */
+    function addArgusMiniMsg(who, text){
+      const thread = document.getElementById('argusMiniThread');
+      if(!thread) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'tg-msg ' + (who === 'user' ? 'tg-msg--user' : 'tg-msg--argus');
+      wrap.style.maxWidth = '100%';
+      wrap.innerHTML = `<div class="tg-msg__meta">${who==='user'?'Você':'ARGUS'} • ${nowTime()}</div>
+                        <div class="tg-msg__text">${escapeHtml(String(text))}</div>`;
+      thread.appendChild(wrap);
+      thread.scrollTop = thread.scrollHeight;
     }
 
-    if(normalizedNow && ENV_ALERT_STATE[siteId].aggravated && throttle(siteId,"env_normalized",120)){
-      ENV_ALERT_STATE[siteId].aggravated = false;
-      addTimelineEvent("info",
-        "Condições ambientais normalizadas",
-        "Padrões de umidade/vento reduziram nas últimas 3h; tendência de corrosão deve estabilizar."
-      );
-    }
+    function sendArgusMini(customQ){
+      setArgusBadge(false);
 
-    // Alertas individuais úteis (mesmo sem agravamento completo)
-    if(humPersistent && throttle(siteId,"hum_persist",180)){
-      addTimelineEvent("info",
-        "Umidade elevada persistente",
-        `Umidade ≥80% em ${Math.round(humCov6h*100)}% das amostras nas últimas 6h.`
-      );
-    }
-    if(windPersistent && throttle(siteId,"wind_persist",180)){
-      addTimelineEvent("info",
-        "Vento persistente",
-        `Vento ≥14 km/h em ${Math.round(windCov6h*100)}% das amostras nas últimas 6h.`
-      );
-    }
+      try{
+        const input = document.getElementById('argusMiniInput');
+        const q = (typeof customQ === 'string') ? customQ : (input?.value || '');
+        if(input) input.value = '';
+        if(!q.trim()) return;
+        addArgusMiniMsg('user', q);
+        const ans = argusAnswer(q);
+        addArgusMiniMsg('argus', ans);
 
-    // Expor para ARGUS
-    window.ARGUS_INSIGHTS = window.ARGUS_INSIGHTS || {};
-    ARGUS_INSIGHTS.environment = {
-      aggravated: ENV_ALERT_STATE[siteId].aggravated,
-      humCov6h, windCov6h,
-      humAvg6h, windAvg6h,
-      window6h_samples: w6h.length
-    };
-
-    return ARGUS_INSIGHTS.environment;
-  }
-
-  // ---------- Update UI + Feed ARGUS ----------
-  async function updateEnvironmentForSelectedSite(force=false){
-    const site = getSelectedSite();
-    let weather = null;
-
-    try { weather = await fetchWeatherForSite(site); }
-    catch(e){ weather = null; }
-
-    if(!weather) weather = simulatedWeatherForSite(site);
-
-    // UI
-    const h = document.getElementById("envHumidity");
-    const w = document.getElementById("envWind");
-    const t = document.getElementById("envTemp");
-    const src = document.getElementById("envSource");
-    const upd = document.getElementById("envUpdated");
-    const hint = document.getElementById("envKeyHint");
-
-    if(h) h.textContent = `${Math.round(weather.humidity)}%`;
-    if(w) w.textContent = `${Math.round(weather.wind_kmh)} km/h`;
-    if(t) t.textContent = `${Math.round(weather.temperature)} °C`;
-    if(src) src.textContent = weather.source === "openweather" ? "Real" : "Simulado";
-    if(upd) upd.textContent = `Atualização: ${fmtBR(weather.fetched_at)}`;
-    if(hint) hint.textContent = hasKey() ? "API: OK" : "API: não configurada";
-
-    // Feed ARGUS
-    window.ARGUS_INPUT = window.ARGUS_INPUT || {};
-    ARGUS_INPUT.environment = {
-      site_id: site.id,
-      humidity: weather.humidity,
-      temperature: weather.temperature,
-      wind_kmh: weather.wind_kmh,
-      wind_deg: weather.wind_deg,
-      source: weather.source,
-      fetched_at: weather.fetched_at
-    };
-
-    // Histórico + alertas
-    recordEnv(site.id, weather);
-    evaluateEnvAlerts(site);
-
-    // Se existir painel ARGUS nativo, peça atualização; senão injete um resumo mínimo.
-    if(typeof window.updateArgusPanel === "function"){
-      try { window.updateArgusPanel(); } catch(e){}
-    } else {
-      // fallback: injeta texto no painel se existir id conhecido
-      const el = document.getElementById("argusEnvLine");
-      if(el){
-        const env = window.ARGUS_INSIGHTS?.environment;
-        if(env?.aggravated){
-          el.textContent = "Cenário ambiental agravado (persistência 6h).";
-        } else {
-          el.textContent = "Ambiente dentro do padrão recente.";
-        }
+        // also keep modal thread in sync (if opened later)
+        addArgusMsg('user', q);
+        addArgusMsg('argus', ans);
+      }catch(e){
+        addArgusMiniMsg('argus', 'Falha ao processar sua pergunta. Recarregue a página (Ctrl+F5).');
+        console.error(e);
       }
     }
 
-    return weather;
-  }
+    setTimeout(function(){
+      // seed message once
+      const mini = document.getElementById('argusMiniThread');
+      if(mini && mini.childElementCount === 0){
+        addArgusMiniMsg('argus','ARGUS online. Estado do ativo carregado. O que deseja analisar agora?');
+      }
 
-  // ---------- Refresh orchestration ----------
-  async function refreshSiteContext(force=false){
-    await updateEnvironmentForSelectedSite(force);
-  }
-  window.refreshSiteContext = refreshSiteContext;
+      document.getElementById('argusMiniSend')?.addEventListener('click', ()=>sendArgusMini());
+      document.getElementById('argusMiniInput')?.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){ e.preventDefault(); sendArgusMini(); }
+      });
 
-  // ---------- Boot ----------
-  document.addEventListener("DOMContentLoaded", async ()=>{
-    ensureEnvUI();
-    initSiteSelect();
-    wireKeyButton();
+      // quick chips
+      document.querySelectorAll('#argusCard .tg-chip').forEach(btn=>{
+        btn.addEventListener('click', ()=> sendArgusMini(btn.getAttribute('data-argusq') || ''));
+      });
 
-    // Primeira leitura
-    await refreshSiteContext(true);
+      // expand button opens modal
+      document.getElementById('argusExpand')?.addEventListener('click', openArgus);
+    }, 0);
 
-    // Atualiza clima a cada 10 minutos (real) — simulado também, mas sem overkill
-    setInterval(()=>{ refreshSiteContext(false); }, 10*60*1000);
-  });
 
-})();
+
+    /* ---------------- ARGUS (UPGRADES: memória + alertas + demo) ---------------- */
+    const ARGUS_MEM_KEY = "TG_ARGUS_MEMORY_V1";
+    const ARGUS_BADGE_KEY = "TG_ARGUS_BADGE_V1";
+    const ARGUS_POLL_MS = 15000; // 15s (demo-friendly)
+
+    function loadMem(){
+      try{
+        return JSON.parse(localStorage.getItem(ARGUS_MEM_KEY) || "{}");
+      }catch{ return {}; }
+    }
+    function saveMem(mem){
+      try{ localStorage.setItem(ARGUS_MEM_KEY, JSON.stringify(mem)); }catch{}
+    }
+    function memPush(siteId, snap){
+      const mem = loadMem();
+      const arr = mem[siteId] || [];
+      arr.push({ t: Date.now(), snap });
+      // keep ~14 days with cap
+      const cutoff = Date.now() - (14 * 24 * 3600 * 1000);
+      const filtered = arr.filter(x => x.t >= cutoff).slice(-3000);
+      mem[siteId] = filtered;
+      saveMem(mem);
+    }
+    function memGet(siteId){
+      const mem = loadMem();
+      return mem[siteId] || [];
+    }
+    function statePT(label){
+      if(label === "CRÍTICO") return "Crítico";
+      if(label === "ATENÇÃO") return "Atenção";
+      return "Estável";
+    }
+    function classifyPT(risk){
+      if(risk >= (RISK_LEVELS?.critical ?? 80)) return "CRÍTICO";
+      if(risk >= (RISK_LEVELS?.attention ?? 55)) return "ATENÇÃO";
+      return "ESTÁVEL";
+    }
+    function fmtDateTime(ts){
+      try{
+        const d = new Date(ts);
+        return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      }catch{ return ""; }
+    }
+    function avg(arr){ return arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+
+    function getWindow(siteId, hours){
+      const all = memGet(siteId);
+      const cutoff = Date.now() - (hours * 3600 * 1000);
+      return all.filter(x => x.t >= cutoff);
+    }
+    function pickClosest(siteId, targetTs){
+      const all = memGet(siteId);
+      if(!all.length) return null;
+      let best = all[0];
+      let bestDist = Math.abs(all[0].t - targetTs);
+      for(const x of all){
+        const d = Math.abs(x.t - targetTs);
+        if(d < bestDist){ best = x; bestDist = d; }
+      }
+      return best;
+    }
+
+    function summarizeHours(snapNow, hours){
+      const siteId = snapNow.site_id;
+      const win = getWindow(siteId, hours);
+      if(win.length < 2){
+        return `Ainda não há histórico suficiente para ${hours}h neste ativo. Mantenha a simulação rodando para consolidar tendências.`;
+      }
+      const risks = win.map(x => Number(x.snap.risk)||0);
+      const hums = win.map(x => parseFloat(String(x.snap.hum).replace('%','')) || 0);
+      const winds = win.map(x => parseFloat(String(x.snap.wind).replace(/[^\d.,]/g,'').replace(',','.')) || 0);
+
+      const first = win[0].snap;
+      const last = win[win.length-1].snap;
+
+      const deltaRisk = (last.risk ?? 0) - (first.risk ?? 0);
+      const stFirst = classifyPT(first.risk ?? 0);
+      const stLast = classifyPT(last.risk ?? 0);
+
+      const line1 = `Resumo ${hours}h (ativo ${siteId}): Estado ${statePT(stLast)} | Risco ${last.risk}/100 | VUE ${last.vue}.`;
+      const line2 = `Variação de risco: ${deltaRisk>=0?'+':''}${deltaRisk} (de ${first.risk}/100 para ${last.risk}/100).`;
+      const line3 = `Ambiente médio: Umidade ~${Math.round(avg(hums))}% | Vento ~${avg(winds).toFixed(1)} km/h.`;
+      const line4 = (stFirst !== stLast) ? `Mudança de faixa: ${statePT(stFirst)} → ${statePT(stLast)}.` : `Faixa mantida: ${statePT(stLast)}.`;
+
+      return [line1,line2,line3,line4].join("\n");
+    }
+
+    function whatChangedSinceYesterday(snapNow){
+      const siteId = snapNow.site_id;
+      const ref = pickClosest(siteId, Date.now() - (24*3600*1000));
+      if(!ref){
+        return "Ainda não há histórico de 24h suficiente para comparar. Assim que acumular dados, consigo dizer o que mudou desde ontem.";
+      }
+      const a = ref.snap;
+      const b = snapNow;
+
+      const dr = (b.risk ?? 0) - (a.risk ?? 0);
+      const dVue = `VUE: ${a.vue} → ${b.vue}`;
+      const dHum = `Umidade: ${a.hum} → ${b.hum}`;
+      const dWind = `Vento: ${a.wind} → ${b.wind}`;
+      const dState = `Estado: ${statePT(classifyPT(a.risk ?? 0))} → ${statePT(classifyPT(b.risk ?? 0))}`;
+
+      return [
+        `Comparativo 24h (ativo ${siteId}):`,
+        `${dState}`,
+        `Risco: ${a.risk}/100 → ${b.risk}/100 (${dr>=0?'+':''}${dr})`,
+        dVue,
+        dHum,
+        dWind,
+        `Referência: ${fmtDateTime(ref.t)}`
+      ].join("\n");
+    }
+
+    // Alerts: notify when state band changes
+    function setArgusBadge(on){
+  const b = document.getElementById('argusInsightBadge');
+  if(!b) return;
+  if(on) b.classList.remove('hidden');
+  else b.classList.add('hidden');
+}
+
+function loadBadge(){
+      try{ return JSON.parse(localStorage.getItem(ARGUS_BADGE_KEY) || "{}"); }catch{ return {}; }
+    }
+    function saveBadge(b){ try{ localStorage.setItem(ARGUS_BADGE_KEY, JSON.stringify(b)); }catch{} }
+
+    function argusNotify(text){
+      setArgusBadge(true);
+
+      // push into both threads (mini + modal) without duplicating user message
+      addArgusMiniMsg('argus', text);
+      addArgusMsg('argus', text);
+    }
+
+    function pollAndLearn(){
+      const snap = readDashboardSnapshot();
+      if(!snap?.site_id) return;
+
+      // store memory
+      memPush(snap.site_id, snap);
+
+      // state change detection
+      const badge = loadBadge();
+      const prev = badge[snap.site_id]?.state;
+      const curr = classifyPT(snap.risk ?? 0);
+      if(prev && prev !== curr){
+        const msg = `Alerta: mudança de faixa no ativo ${snap.site_id}: ${statePT(prev)} → ${statePT(curr)}. Risco atual ${snap.risk}/100.`;
+        argusNotify(msg);
+      }
+      badge[snap.site_id] = { state: curr, risk: snap.risk, t: Date.now() };
+      saveBadge(badge);
+    }
+
+    // Extend argusAnswer with new intents
+    const _argusAnswerBase = argusAnswer;
+    argusAnswer = function(q){
+      const t = (q || "").trim();
+      const low = t.toLowerCase();
+
+      const snap = readDashboardSnapshot();
+
+      if(low.includes("resumo 7") || low.includes("7 dias") || low.includes("7d")){
+        return summarizeHours(snap, 24*7);
+      }
+      if(low.includes("resumo 24") || low.includes("24h") || low.includes("24 h")){
+        return summarizeHours(snap, 24);
+      }
+      if(low.includes("ontem") || low.includes("desde ontem") || low.includes("o que mudou")){
+        return whatChangedSinceYesterday(snap);
+      }
+
+      if(low.includes("demo") || low.includes("apresentação") || low.includes("apresentacao")){
+        return [
+          "Modo demo (rápido):",
+          "1) Pergunte: “por que o risco subiu?”",
+          "2) Depois: “quando devo agir?”",
+          "3) Depois: “plano de ação”",
+          "4) Finalize: “resumo 24h” ou “resumo 7 dias”.",
+          "Dica: clique em outro ativo para mostrar comparação por região."
+        ].join("\n");
+      }
+
+      return _argusAnswerBase(q);
+    };
+
+    // Start polling after load
+    setTimeout(function(){
+      pollAndLearn(); // immediate
+      setInterval(pollAndLearn, ARGUS_POLL_MS);
+    }, 1200);
+
+
+
+    /* -------- DEMO+ (cenários + eventos) -------- */
+    const DEMO_SCENARIOS = {
+      normal:    { hum: 60, wind: 8,  riskDelta: 0,  label: "Normal" },
+      agressivo: { hum: 80, wind: 14, riskDelta: 8,  label: "Ambiente agressivo" },
+      calor:     { hum: 65, wind: 10, riskDelta: 6,  label: "Onda de calor" },
+      maresia:   { hum: 85, wind: 18, riskDelta: 12, label: "Maresia severa" },
+      tempestade:{ hum: 90, wind: 22, riskDelta: 15, label: "Pós-tempestade" },
+    };
+
+    function setDemoOverride(o){
+      window.__DEMO_OVERRIDE__ = o || null;
+    }
+
+    function getDemoOverride(){
+      return window.__DEMO_OVERRIDE__ || null;
+    }
+
+    function applyScenario(name){
+      const s = DEMO_SCENARIOS[name] || DEMO_SCENARIOS.normal;
+      setDemoOverride({ ...s, name });
+      const msg = `Cenário aplicado: ${s.label}. Ajustando ambiente e risco (demo).`;
+      if(typeof argusNotify === 'function') argusNotify(msg);
+      else if(typeof addArgusMiniMsg === 'function') addArgusMiniMsg('argus', msg);
+      // log to timeline if available
+      if(typeof pushEvent === 'function') pushEvent("DEMO", msg, "Evento");
+    }
+
+    function demoEvent(type){
+      const o = getDemoOverride() || { ...DEMO_SCENARIOS.normal, name: "normal" };
+      if(type === "humidity"){
+        o.hum = Math.min(98, (o.hum || 60) + 12);
+        o.riskDelta = Math.min(25, (o.riskDelta || 0) + 4);
+        setDemoOverride(o);
+        argusNotify(`Evento (demo): Umidade elevada detectada. Ambiente mais agressivo.`);
+        if(typeof pushEvent === 'function') pushEvent("AMBIENTE", "Umidade elevada detectada (demo). Possível aceleração de corrosão.", "Evento");
+      }
+      if(type === "drywet"){
+        o.riskDelta = Math.min(30, (o.riskDelta || 0) + 6);
+        setDemoOverride(o);
+        argusNotify(`Evento (demo): Ciclo seco–úmido intensificado. Tendência de risco ajustada.`);
+        if(typeof pushEvent === 'function') pushEvent("AMBIENTE", "Ciclo seco–úmido intensificado (demo).", "Evento");
+      }
+      if(type === "critical"){
+        o.riskDelta = 35;
+        o.hum = 92;
+        o.wind = 24;
+        setDemoOverride(o);
+        argusNotify(`Evento (demo): Condição crítica simulada. Verifique plano de ação do ativo.`);
+        if(typeof pushEvent === 'function') pushEvent("SISTEMA", "Alerta crítico simulado (demo).", "Alerta");
+      }
+    }
+
+    // Wire UI
+    setTimeout(()=>{
+      const sel = document.getElementById('demoScenario');
+      if(sel){
+        sel.addEventListener('change', e => applyScenario(e.target.value));
+        applyScenario(sel.value); // start deterministic
+      }
+      document.getElementById('demoEventHumidity')?.addEventListener('click', ()=>demoEvent("humidity"));
+      document.getElementById('demoEventDryWet')?.addEventListener('click', ()=>demoEvent("drywet"));
+      document.getElementById('demoEventCritical')?.addEventListener('click', ()=>demoEvent("critical"));
+    }, 800);
+
 </script>
 
 <script>
-/* =========================================================
-   ARGUS FASE B (Copiloto) + Auditoria + Painel Analítico
-   - Não altera o motor de decisão: apenas observa snapshots e interações.
-   ========================================================= */
+/* ===================== TowerGuard DEMO ENTERPRISE ADDONS (SAFE) ===================== */
+
+/* --- Timeline Narrativa: registra eventos em linguagem humana --- */
+function narrateEvent(type, payload){
+  const map = {
+    'scenario': (p)=> `Cenário aplicado: ${p}. O ambiente entrou em um novo regime operacional.`,
+    'humidity_up': ()=> `Aumento de umidade detectado. Eletrólito persistente eleva a agressividade ambiental.`,
+    'dry_wet': ()=> `Ciclo seco–úmido intensificado. Este padrão acelera a degradação da proteção.`,
+    'risk_up': (p)=> `Risco ajustado para ${p}/100. Janela de manutenção começa a se fechar.`,
+    'state_change': (p)=> `Mudança de faixa: ${p.from} → ${p.to}. Atenção operacional requerida.`,
+  };
+  return (map[type] ? map[type](payload) : 'Evento operacional registrado.');
+}
+
+function pushNarrative(type, payload){
+  const text = narrateEvent(type, payload);
+  if(typeof addTimelineEvent === 'function'){
+    addTimelineEvent('ARGUS', text);
+  }
+  if(typeof addArgusMiniMsg === 'function'){
+    addArgusMiniMsg('argus', text);
+  }
+}
+
+/* --- Helpers --- */
+function safeGetSites(){
+  return (window.sites || window.SITES || []);
+}
+function classifyPT_LOCAL(risk){
+  if(typeof classifyPT === "function") return classifyPT(risk);
+  if(risk >= 80) return "CRÍTICO";
+  if(risk >= 55) return "ATENÇÃO";
+  return "ESTÁVEL";
+}
+
+/* --- P1: Prioridades do dia --- */
+function argusPrioridades(){
+  const sitesArr = safeGetSites();
+  if(!sitesArr.length) return "Sem ativos suficientes para priorização.";
+  const ranked = sitesArr.map(s=>{
+    const r = Math.round(typeof riskScore==='function'?riskScore(s):0);
+    return {id:s.id||s.name||"ATIVO", risk:r};
+  }).sort((a,b)=>b.risk-a.risk).slice(0,3);
+  return "Prioridades do dia:\n" + ranked.map((x,i)=>`${i+1}) ${x.id} — Risco ${x.risk}/100`).join("\n");
+}
+
+/* --- P2: Decompor risco (explicabilidade heurística) --- */
+function argusDecompor(){
+  if(typeof readDashboardSnapshot !== "function") return "Snapshot indisponível.";
+  const snap = readDashboardSnapshot();
+  const env = Math.round((snap.risk||0)*0.5);
+  const trend = Math.round((snap.risk||0)*0.3);
+  const lim = Math.round((snap.risk||0)*0.2);
+  return `Decomposição do risco (${snap.risk}/100):\n- Ambiente: ${env}\n- Tendência: ${trend}\n- Proximidade de limiar: ${lim}`;
+}
+
+/* --- P3: Caderno de bordo (memória) --- */
+function argusCaderno(){
+  const site = (typeof readDashboardSnapshot==="function" ? readDashboardSnapshot().site_id : "ATIVO");
+  let mem = {};
+  try{ mem = JSON.parse(localStorage.getItem('TG_ARGUS_MEMORY_V1')||'{}'); }catch{}
+  const arr = mem[site]||[];
+  if(!arr.length) return "Sem histórico suficiente para caderno de bordo.";
+  const last = arr.slice(-5);
+  return "Caderno de bordo (últimos registros):\n" + last.map(x=>`• ${new Date(x.t).toLocaleString('pt-BR')} — Risco ${x.snap.risk}/100`).join("\n");
+}
+
+/* --- P4: Modo apresentação (roteiro) --- */
+function argusApresentacao(){
+  const seq = ["resumo 24h","por que o risco subiu?","quando devo agir?","plano de ação"];
+  return "Modo Apresentação (roteiro):\n" + seq.map((q,i)=>`${i+1}) ${q}`).join("\n");
+}
+
+/* --- Playbook por severidade --- */
+function argusPlaybook(){
+  const snap = (typeof readDashboardSnapshot==="function" ? readDashboardSnapshot() : {risk:0, site_id:"ATIVO"});
+  const risk = snap.risk||0;
+  const sev = classifyPT_LOCAL(risk);
+
+  if(sev === "CRÍTICO"){
+    return `Playbook — CRÍTICO
+Ação imediata:
+- Acionar inspeção em campo
+- Registrar evidências (foto/vídeo)
+- Avaliar condição da proteção
+
+Em 72h:
+- Planejar intervenção
+- Atualizar cronograma e prioridade
+
+Evidências:
+- Fotos e registro do painel
+- Eventos da timeline
+
+Resultado esperado:
+- Conter avanço do risco`;
+  }
+  if(sev === "ATENÇÃO"){
+    return `Playbook — ATENÇÃO
+Ação imediata:
+- Monitorar tendência e ambiente
+- Verificar eventos recentes
+
+Em 72h:
+- Planejar manutenção preventiva
+- Confirmar janela operacional
+
+Evidências:
+- Histórico 24h/7d
+- Eventos da timeline
+
+Resultado esperado:
+- Evitar escalada para Crítico`;
+  }
+  return `Playbook — ESTÁVEL
+Ação imediata:
+- Manter monitoramento contínuo
+
+Rotina:
+- Checklist semanal
+- Revisão de tendência
+
+Resultado esperado:
+- Operação dentro do esperado`;
+}
+
+/* --- Exportação DEMO CSV --- */
+function argusExportCSV(){
+  const snap = (typeof readDashboardSnapshot==="function" ? readDashboardSnapshot() : {});
+  const rows = [
+    ["Ativo", snap.site_id || ""],
+    ["Risco", snap.risk ?? ""],
+    ["VUE", snap.vue ?? ""],
+    ["Estado", classifyPT_LOCAL(snap.risk||0)],
+    ["Ambiente", `Umidade ${snap.hum||""} | Vento ${snap.wind||""}`],
+    ["Observação", "DEMONSTRAÇÃO"]
+  ];
+  const csv = "Campo,Valor\n" + rows.map(r=>r.map(x=>String(x).replaceAll(",",";")).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `TowerGuard_DEMO_${snap.site_id||"ATIVO"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* --- Hook: cenário demo gera evento narrativo --- */
+setTimeout(()=>{
+  const sel = document.getElementById('demoScenario');
+  if(sel){
+    sel.addEventListener('change', e=>{
+      const label = e.target.options[e.target.selectedIndex].text;
+      pushNarrative('scenario', label);
+    });
+  }
+}, 800);
+
+/* --- Extensão segura do argusAnswer sem sobrescrever cadeia várias vezes --- */
 (function(){
-  const LS_KEY = 'ARGUS_AUDIT_LOG_V1';
-  const MAX_LOGS = 500;
+  if(typeof argusAnswer !== "function") return;
+  if(window.__TG_ARGUS_ENTERPRISE__) return;
+  window.__TG_ARGUS_ENTERPRISE__ = true;
 
-  function safeParse(json, fallback){
-    try { return JSON.parse(json); } catch { return fallback; }
-  }
+  const baseAnswer = argusAnswer;
+  window.argusAnswer = function(q){
+    const low = String(q||"").toLowerCase();
 
-  function loadLogs(){
-    return safeParse(localStorage.getItem(LS_KEY) || '[]', []);
-  }
+    if(low.includes("prioridade")) return argusPrioridades();
+    if(low.includes("decompor")) return argusDecompor();
+    if(low.includes("caderno")) return argusCaderno();
+    if(low.includes("apresenta")) return argusApresentacao();
+    if(low.includes("playbook") || low.includes("checklist")) return argusPlaybook();
+    if(low.includes("exportar") || low.includes("relat")){
+      argusExportCSV();
+      return "Relatório DEMO exportado em CSV.";
+    }
+    return baseAnswer(q);
+  };
+})();
+</script>
 
-  function saveLogs(logs){
-    localStorage.setItem(LS_KEY, JSON.stringify(logs.slice(0, MAX_LOGS)));
-  }
 
-  function pushLog(entry){
-    const logs = loadLogs();
-    logs.unshift(entry);
-    saveLogs(logs);
-    renderAuditList();
-  }
+<script>
+/* ===================== COMPARAÇÃO + PDF DEMO ===================== */
+
+/* --- Comparar dois ativos (gestor) --- */
+function argusComparar(ativoA, ativoB){
+  const sites = (window.sites || window.SITES || []);
+  const a = sites.find(s=> (s.id||s.name)===ativoA);
+  const b = sites.find(s=> (s.id||s.name)===ativoB);
+  if(!a || !b) return "Não encontrei os dois ativos para comparação.";
+
+  const ra = Math.round(typeof riskScore==='function'?riskScore(a):0);
+  const rb = Math.round(typeof riskScore==='function'?riskScore(b):0);
+
+  return `Comparação de ativos:
+${ativoA}: Risco ${ra}/100
+${ativoB}: Risco ${rb}/100
+
+Prioridade: ${ra>rb?ativoA:ativoB}`;
+}
+
+/* --- Exportar Parecer PDF DEMO (mock) --- */
+function argusExportPDF(){
+  const snap = readDashboardSnapshot();
+  const content = `
+TowerGuard – Parecer Técnico (DEMONSTRAÇÃO)
+
+Ativo: ${snap.site_id}
+Estado: ${classifyPT(snap.risk)}
+Risco: ${snap.risk}/100
+VUE: ${snap.vue}
+
+Ambiente:
+- Umidade: ${snap.hum}
+- Vento: ${snap.wind}
+
+Conclusão:
+Este parecer foi gerado pelo ARGUS em modo demonstração.
+`;
+
+  const blob = new Blob([content], {type:"application/pdf"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Parecer_DEMO_${snap.site_id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* --- Extender intents --- */
+(function(){
+  if(typeof argusAnswer!=="function") return;
+  const base = argusAnswer;
+  argusAnswer = function(q){
+    const low = (q||"").toLowerCase();
+    if(low.startsWith("comparar")){
+      const parts = q.split(" ");
+      if(parts.length>=3) return argusComparar(parts[1], parts[2]);
+      return "Use: comparar ATIVO_A ATIVO_B";
+    }
+    if(low.includes("pdf") || low.includes("parecer")){
+      argusExportPDF();
+      return "Parecer técnico DEMO gerado em PDF.";
+    }
+    return base(q);
+  };
+})();
+</script>
+
+
+<script>
+/* ===================== DEMO: Baseline 0 + ENV_STATE por ativo (SAFE PATCH) ===================== */
+(function(){
+  // Global flags
+  window.__TG_DEMO_MODE__ = true;
+  window.__DEMO_BASELINE__ = 0;
+
+  // Per-asset environment state (source of truth)
+  const envBySite = window.__TG_ENV_BY_SITE__ = window.__TG_ENV_BY_SITE__ || {};
+  const defaultEnv = { humidity: 0, wind: 0, rainRisk: 0, temperature: 25, scenario: "Inicial" };
 
   function getSiteId(){
-    // tenta inferir do contexto atual (sites[currentIndex]) ou seletor
+    const snap = (typeof readDashboardSnapshot === "function") ? readDashboardSnapshot() : null;
+    if(snap && snap.site_id) return snap.site_id;
     const sel = document.getElementById('siteSelect');
-    if (sel && sel.value) return sel.value;
-    if (window.sites && typeof window.currentIndex === 'number' && window.sites[window.currentIndex]) return window.sites[window.currentIndex].id;
-    if (window.SITES && window.SITES[0]) return window.SITES[0].id;
-    return 'SITE-UNKNOWN';
+    return sel ? sel.value : "";
   }
 
-  // ---- Analytics: calcula deltas/trends/correlations a partir de ARGUS.history ----
-  function computeSlope(arr, n=12){
-    const a = arr.slice(-n);
-    if (a.length < 3) return 0;
-    return (a[a.length-1] - a[0]) / a.length;
+  function getEnv(siteId){
+    if(!siteId) return { ...defaultEnv };
+    if(!envBySite[siteId]) envBySite[siteId] = { ...defaultEnv };
+    return envBySite[siteId];
   }
 
-  function pearson(x, y){
-    const n = Math.min(x.length, y.length);
-    if (n < 6) return 0;
-    const xs = x.slice(-n), ys = y.slice(-n);
-    const avgX = xs.reduce((a,b)=>a+b,0)/n;
-    const avgY = ys.reduce((a,b)=>a+b,0)/n;
-    let num=0, denX=0, denY=0;
-    for (let i=0;i<n;i++){
-      num += (xs[i]-avgX)*(ys[i]-avgY);
-      denX += (xs[i]-avgX)**2;
-      denY += (ys[i]-avgY)**2;
-    }
-    return denX && denY ? (num / Math.sqrt(denX*denY)) : 0;
+  function setEnv(siteId, patchObj){
+    if(!siteId) return;
+    const cur = getEnv(siteId);
+    envBySite[siteId] = { ...cur, ...patchObj };
   }
 
-  function buildAnalyticSnapshot(){
+  // UI sync (best-effort)
+  function setText(id, val){
+    const el = document.getElementById(id);
+    if(el) el.textContent = val;
+  }
+
+  function refreshEnvUI(){
     const siteId = getSiteId();
-    const h = (window.ARGUS && window.ARGUS.history && window.ARGUS.history[siteId]) ? window.ARGUS.history[siteId] : null;
-    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
-    if (!h || !s) return null;
+    if(!siteId) return;
+    const env = getEnv(siteId);
 
-    const idxNow = h.zinc.length - 1;
-    const idx12 = Math.max(0, idxNow - 12);
-    const idx24 = Math.max(0, idxNow - 24);
+    // These ids exist in our demo builds (humidityLabel/windLabel). Others are best-effort.
+    setText('humidityLabel', `${Math.round(env.humidity)}%`);
+    setText('windLabel', `${Number(env.wind).toFixed(1)} km/h`);
 
-    const deltas = {
-      zinc_12: (h.zinc[idxNow] - h.zinc[idx12]) || 0,
-      zinc_24: (h.zinc[idxNow] - h.zinc[idx24]) || 0,
-      steel_12: (h.steel[idxNow] - h.steel[idx12]) || 0,
-      plate_12: (h.plate[idxNow] - h.plate[idx12]) || 0,
-    };
+    // Optional labels (only if present in your layout)
+    setText('rainLabel', `${Math.round(env.rainRisk)}%`);
+    setText('tempLabel', `${Math.round(env.temperature)}°C`);
 
-    // Tendências (inclinações)
-    const trends = {
-      zinc_slope: computeSlope(h.zinc, 12),
-      steel_slope: computeSlope(h.steel, 12),
-      plate_slope: computeSlope(h.plate, 12),
-      cu_slope: computeSlope(h.cu, 12),
-    };
+    // Let ARGUS know (optional message)
+    // no spam: only on scenario changes
+  }
 
-    // Correlações simples com ambiente (se disponível via ARGUS.weather.history)
-    const env = (window.ARGUS && window.ARGUS.envHistory && window.ARGUS.envHistory[siteId]) ? window.ARGUS.envHistory[siteId] : null;
-    const corrs = [];
-    if (env && env.humidity && env.humidity.length > 6){
-      const cZH = pearson(h.zinc.slice(-env.humidity.length), env.humidity);
-      if (cZH > 0.65) corrs.push('Zinco × Umidade (forte)');
-      const cSW = env.wind ? pearson(h.steel.slice(-env.wind.length), env.wind) : 0;
-      if (cSW > 0.65) corrs.push('Aço × Vento (forte)');
+  // Override/augment scenario application to write ENV_STATE for the selected asset
+  const originalApplyScenario = window.applyScenario;
+  window.applyScenario = function(name){
+    const siteId = getSiteId();
+    // If DEMO_SCENARIOS exists, use it; otherwise keep minimal
+    const s = (window.DEMO_SCENARIOS && window.DEMO_SCENARIOS[name]) ? window.DEMO_SCENARIOS[name] : null;
+
+    const envPatch = s ? {
+      humidity: s.hum ?? 0,
+      wind: s.wind ?? 0,
+      // if scenario defines rain/temp, use; else derive simple defaults
+      rainRisk: (s.rain ?? (name === 'tempestade' ? 75 : name === 'maresia' ? 45 : 20)),
+      temperature: (s.temp ?? (name === 'calor' ? 38 : 28)),
+      scenario: (name || "Demo")
+    } : { scenario: (name || "Demo") };
+
+    setEnv(siteId, envPatch);
+    refreshEnvUI();
+
+    if(typeof addArgusMiniMsg === 'function'){
+      const env = getEnv(siteId);
+      addArgusMiniMsg('argus', `Cenário aplicado no ativo ${siteId}: ${env.scenario}. Umidade ${Math.round(env.humidity)}%, vento ${Number(env.wind).toFixed(1)} km/h, risco de chuva ${Math.round(env.rainRisk)}%.`);
     }
 
-    // Drivers (do snapshot já calculado pelo motor)
-    const drivers = (s.reasons && s.reasons.length) ? s.reasons.slice(0,4) : ['Sem drivers dominantes no momento.'];
-
-    // Planos de ação: usa o que estiver no snapshot (se você já injeta), senão sugere de forma controlada
-    const actions = (s.actions && Array.isArray(s.actions) && s.actions.length) ? s.actions : [];
-    const suggested = [];
-    if (!actions.length){
-      // regras conservadoras (não imperativas)
-      if (s.operational_state === 'attention' || s.operational_state === 'critical'){
-        suggested.push({ title:'Avaliar manutenção preventiva', window:'15–30 dias', reason:'Condição em atenção/crítica e tendência positiva de degradação.' });
-      }
-      if (s.env && (s.env.humidity >= 80 || s.env.wind >= 14)){
-        suggested.push({ title:'Recomenda-se inspeção ambiental', window:'72h', reason:'Ambiente agressivo (umidade/vento) pode acelerar corrosão.' });
-      }
+    // Preserve any original behavior
+    if(typeof originalApplyScenario === 'function'){
+      try{ originalApplyScenario(name); }catch(e){ /* ignore */ }
     }
+  };
 
-    return {
-      site_id: siteId,
-      timestamp: s.timestamp,
-      state: s.operational_state,
-      score: s.score,
-      confidence: s.confidence,
-      deltas, trends,
-      correlations: corrs,
-      drivers,
-      actions: actions.length ? actions : suggested,
-      env: s.env || null,
-      rul: s.rul || null
-    };
-  }
-
-  // ---- UI: Analysis modal ----
-  function openModal(id){
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.remove('hidden');
-    el.classList.add('flex');
-  }
-  function closeModal(id){
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.add('hidden');
-    el.classList.remove('flex');
-  }
-
-  function renderAnalysis(){
-    const a = buildAnalyticSnapshot();
-    if (!a) return;
-
-    const d = document.getElementById('argusAnalysisDeltas');
-    const t = document.getElementById('argusAnalysisTrends');
-    const c = document.getElementById('argusAnalysisCorr');
-    const ul = document.getElementById('argusAnalysisActions');
-
-    if (d) d.innerHTML = `
-      <div>Δ Zinco (12): <b>${a.deltas.zinc_12.toFixed(1)}%</b></div>
-      <div>Δ Zinco (24): <b>${a.deltas.zinc_24.toFixed(1)}%</b></div>
-      <div>Δ Aço (12): <b>${a.deltas.steel_12.toFixed(1)}%</b></div>
-      <div>Δ Placa (12): <b>${a.deltas.plate_12.toFixed(1)}%</b></div>
-      <div class="text-slate-500 mt-1">Confiança: ${a.confidence}</div>
-    `;
-
-    if (t) t.innerHTML = `
-      <div>Slope Zinco: <b>${a.trends.zinc_slope.toFixed(3)}</b></div>
-      <div>Slope Aço: <b>${a.trends.steel_slope.toFixed(3)}</b></div>
-      <div>Slope Placa: <b>${a.trends.plate_slope.toFixed(3)}</b></div>
-      <div>Slope Cu: <b>${a.trends.cu_slope.toFixed(3)}</b></div>
-    `;
-
-    const corrTxt = (a.correlations && a.correlations.length) ? a.correlations.map(x=>`<div>• ${x}</div>`).join('') : '<div>Nenhuma correlação forte detectada.</div>';
-    const drvTxt = (a.drivers||[]).map(x=>`<div>• ${x}</div>`).join('');
-    if (c) c.innerHTML = `
-      <div class="mb-2"><span class="text-slate-400">Drivers:</span></div>
-      ${drvTxt}
-      <div class="mt-3 mb-2"><span class="text-slate-400">Correlações:</span></div>
-      ${corrTxt}
-    `;
-
-    if (ul){
-      ul.innerHTML = '';
-      const arr = (a.actions && a.actions.length) ? a.actions : [];
-      arr.forEach(ac=>{
-        const li = document.createElement('li');
-        li.textContent = `${ac.title} (${ac.window}) — ${ac.reason}`;
-        ul.appendChild(li);
-      });
-      if (!arr.length){
-        const li = document.createElement('li');
-        li.textContent = 'Nenhuma recomendação técnica no momento.';
-        ul.appendChild(li);
-      }
+  // Hard reset baseline at load: set all assets to 0 env => risk 0
+  function initBaselineZero(){
+    const sites = (window.sites || window.SITES || []);
+    for(const s of sites){
+      const id = s.id || s.name;
+      if(id && !envBySite[id]) envBySite[id] = { ...defaultEnv };
     }
+    refreshEnvUI();
   }
 
-  // ---- Auditoria ----
-  function auditSnapshot(){
-    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
-    if (!s) return;
+  // DEMO risk model: replaces riskScore() in demo mode so it starts at 0
+  const originalRiskScore = window.riskScore;
+  window.riskScore = function(site){
+    if(!window.__TG_DEMO_MODE__) {
+      return (typeof originalRiskScore === 'function') ? originalRiskScore(site) : 0;
+    }
+    const siteId = site ? (site.id || site.name) : getSiteId();
+    const env = getEnv(siteId);
 
-    const entry = {
-      type: 'snapshot',
-      timestamp: new Date().toISOString(),
-      site_id: getSiteId(),
-      argus: {
-        operational_state: s.operational_state,
-        confidence: s.confidence,
-        score: s.score,
-        rul: s.rul || null,
-        reasons: s.reasons || [],
-        anomalies: s.anomalies || []
-      },
-      environment: s.env || null
-    };
-    pushLog(entry);
-  }
+    // Simple, controllable model (0..100) — starts at 0 when env is 0
+    const base = Number(window.__DEMO_BASELINE__ || 0);
+    const hum = Math.max(0, Math.min(100, Number(env.humidity || 0)));
+    const wind = Math.max(0, Math.min(60, Number(env.wind || 0)));
+    const rain = Math.max(0, Math.min(100, Number(env.rainRisk || 0)));
+    const temp = Math.max(0, Math.min(60, Number(env.temperature || 25)));
 
-  function auditCopilot(intent, question, answer){
-    const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
-    pushLog({
-      type: 'copilot',
-      timestamp: new Date().toISOString(),
-      site_id: getSiteId(),
-      intent: intent || 'free_text',
-      question: question || '',
-      answer: answer || '',
-      argus_state: s ? s.operational_state : null,
-      score: s ? s.score : null,
-      confidence: s ? s.confidence : null
-    });
-  }
+    // Weights tuned for demo clarity (not claiming physical precision)
+    const score = base
+      + hum * 0.28
+      + wind * 0.55
+      + rain * 0.22
+      + Math.max(0, temp - 25) * 0.6;
 
-  function renderAuditList(){
-    const list = document.getElementById('argusAuditList');
-    const count = document.getElementById('argusAuditCount');
-    if (!list) return;
-    const logs = loadLogs();
-    if (count) count.textContent = `${logs.length} eventos`;
-    list.innerHTML = '';
-    logs.slice(0, 120).forEach((e, i)=>{
-      const div = document.createElement('div');
-      div.className = 'p-2 rounded-lg bg-slate-900/40 border border-slate-800';
-      const head = `<div class="flex justify-between"><span class="text-slate-300"><b>${e.type.toUpperCase()}</b> • ${e.site_id}</span><span class="text-slate-500">${new Date(e.timestamp).toLocaleString('pt-BR')}</span></div>`;
-      let body = '';
-      if (e.type === 'snapshot'){
-        body = `<div class="mt-1 text-slate-300">Estado: <b>${e.argus.operational_state}</b> • Score: <b>${e.argus.score}</b> • Confiança: <b>${e.argus.confidence}</b></div>`;
-        if (e.argus.rul && e.argus.rul.recommended_days){
-          body += `<div class="text-slate-400">RUL recomendado: ~${e.argus.rul.recommended_days} dias (${e.argus.rul.ci || '±—'})</div>`;
-        }
-        if (e.argus.reasons && e.argus.reasons.length){
-          body += `<div class="text-slate-400">Drivers: ${e.argus.reasons.slice(0,3).join(' | ')}</div>`;
-        }
-      } else {
-        body = `<div class="mt-1 text-slate-300">Q: ${escapeHtml(e.question).slice(0,180)}</div>
-                <div class="text-slate-400 whitespace-pre-wrap">A: ${escapeHtml(e.answer).slice(0,300)}</div>`;
-      }
-      div.innerHTML = head + body;
-      list.appendChild(div);
-    });
-  }
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
 
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, (m)=>({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
-    }[m]));
-  }
-
-  function exportLogs(){
-    const logs = loadLogs();
-    const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `towerguard_argus_audit_${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function clearLogs(){
-    localStorage.removeItem(LS_KEY);
-    renderAuditList();
-  }
-
-  // ---- Hook: capture snapshots after updateARGUS runs ----
-  // updateARGUS é uma função existente no dashboard; fazemos wrap sem alterar lógica.
-  function wrapUpdate(){
-    if (typeof window.updateARGUS !== 'function') return;
-    if (window.__ARGUS_AUDIT_WRAPPED__) return;
-    window.__ARGUS_AUDIT_WRAPPED__ = true;
-
-    const original = window.updateARGUS;
-    window.updateARGUS = function(){
-      const r = original.apply(this, arguments);
-      // depois da atualização, registramos snapshot (com throttle)
-      const s = window.ARGUS ? window.ARGUS.lastSnapshot : null;
-      if (s){
-        const now = Date.now();
-        const last = window.__ARGUS_LAST_AUDIT_TS__ || 0;
-        if (now - last > 60 * 1000){ // 1/min para não inundar
-          window.__ARGUS_LAST_AUDIT_TS__ = now;
-          auditSnapshot();
-        }
-      }
-      return r;
+  // Make ARGUS climate answers use ENV_STATE as source of truth
+  if(typeof readDashboardSnapshot === "function"){
+    const _readSnap = readDashboardSnapshot;
+    window.readDashboardSnapshot = function(){
+      const snap = _readSnap();
+      try{
+        const env = getEnv(snap.site_id);
+        // override visible fields so ARGUS and UI are coherent
+        snap.hum = `${Math.round(env.humidity)}%`;
+        snap.wind = `${Number(env.wind).toFixed(1)} km/h`;
+        snap.rainRisk = `${Math.round(env.rainRisk)}%`;
+        snap.temperature = `${Math.round(env.temperature)}°C`;
+        snap.scenario = env.scenario;
+      }catch(e){}
+      return snap;
     };
   }
 
-  // ---- Hook: capture copilot send ----
-  function wrapCopilotSend(){
-    const sendBtn = document.getElementById('argusSend');
-    const input = document.getElementById('argusInput');
-    if (!sendBtn || !input) return;
-    if (sendBtn.__AUDIT_BOUND__) return;
-    sendBtn.__AUDIT_BOUND__ = true;
+  // Ensure UI updates when switching assets
+  setTimeout(()=>{
+    const sel = document.getElementById('siteSelect');
+    if(sel){
+      sel.addEventListener('change', ()=> setTimeout(refreshEnvUI, 50));
+    }
+    initBaselineZero();
+    // periodic refresh so UI never drifts
+    setInterval(refreshEnvUI, 2000);
+  }, 700);
 
-    sendBtn.addEventListener('click', () => {
-      const q = input.value || '';
-      // resposta é adicionada pelo copilotReply; pegamos do chat após um pequeno tick
-      setTimeout(() => {
-        const chat = document.getElementById('argusChat');
-        if (!chat) return;
-        const msgs = chat.querySelectorAll('[data-role="assistant"]');
-        const last = msgs[msgs.length-1];
-        const ans = last ? last.textContent : '';
-        auditCopilot('free_text', q, ans);
-      }, 50);
-    });
-  }
-
-  // ---- UI bindings ----
-  function bindUi(){
-    const aBtn = document.getElementById('argusAnalysisBtn');
-    const aClose = document.getElementById('argusAnalysisClose');
-    if (aBtn) aBtn.addEventListener('click', () => { renderAnalysis(); openModal('argusAnalysisModal'); });
-    if (aClose) aClose.addEventListener('click', () => closeModal('argusAnalysisModal'));
-
-    const auBtn = document.getElementById('argusAuditBtn');
-    const auClose = document.getElementById('argusAuditClose');
-    const auExport = document.getElementById('argusAuditExport');
-    const auClear = document.getElementById('argusAuditClear');
-    if (auBtn) auBtn.addEventListener('click', () => { renderAuditList(); openModal('argusAuditModal'); });
-    if (auClose) auClose.addEventListener('click', () => closeModal('argusAuditModal'));
-    if (auExport) auExport.addEventListener('click', exportLogs);
-    if (auClear) auClear.addEventListener('click', clearLogs);
-  }
-
-  // ---- Boot ----
-  document.addEventListener('DOMContentLoaded', () => {
-    bindUi();
-    wrapUpdate();
-    wrapCopilotSend();
-    renderAuditList();
-  });
 })();
 </script>
-
-<!-- ARGUS Analysis Modal -->
-<div id="argusAnalysisModal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-50">
-  <div class="bg-slate-950 border border-slate-700/60 rounded-2xl p-4 w-[720px] max-w-[95vw] space-y-3 shadow-xl">
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">ARGUS</p>
-        <h3 class="text-sm font-semibold text-slate-100">Análise Técnica</h3>
-      </div>
-      <button id="argusAnalysisClose" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-        Fechar
-      </button>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div class="card p-3 space-y-2">
-        <p class="text-xs text-slate-400">Variações (Janela)</p>
-        <div id="argusAnalysisDeltas" class="text-sm text-slate-200 space-y-1"></div>
-      </div>
-      <div class="card p-3 space-y-2">
-        <p class="text-xs text-slate-400">Tendências</p>
-        <div id="argusAnalysisTrends" class="text-sm text-slate-200 space-y-1"></div>
-      </div>
-      <div class="card p-3 space-y-2">
-        <p class="text-xs text-slate-400">Correlações & Drivers</p>
-        <div id="argusAnalysisCorr" class="text-sm text-slate-200 space-y-1"></div>
-      </div>
-      <div class="card p-3 space-y-2">
-        <p class="text-xs text-slate-400">Planos de Ação Sugeridos</p>
-        <ul id="argusAnalysisActions" class="text-sm text-slate-200 space-y-1 list-disc pl-4"></ul>
-      </div>
-    </div>
-
-    <p class="text-[0.70rem] text-slate-500">Recomendações técnicas. Avaliação humana requerida. O Copiloto apenas explica.</p>
-  </div>
-</div>
-
-<!-- ARGUS Audit Modal -->
-<div id="argusAuditModal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-50">
-  <div class="bg-slate-950 border border-slate-700/60 rounded-2xl p-4 w-[860px] max-w-[95vw] space-y-3 shadow-xl">
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-slate-500">ARGUS</p>
-        <h3 class="text-sm font-semibold text-slate-100">Auditoria</h3>
-      </div>
-      <div class="flex gap-2">
-        <button id="argusAuditExport" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-          Exportar JSON
-        </button>
-        <button id="argusAuditClear" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-          Limpar
-        </button>
-        <button id="argusAuditClose" class="btn px-3 py-2 hover:bg-slate-900/60 border border-slate-700/50 text-slate-100">
-          Fechar
-        </button>
-      </div>
-    </div>
-
-    <div class="card p-3 space-y-2">
-      <div class="flex items-center justify-between">
-        <p class="text-xs text-slate-400">Últimos eventos (mais recentes primeiro)</p>
-        <p id="argusAuditCount" class="text-xs text-slate-500">0</p>
-      </div>
-      <div id="argusAuditList" class="max-h-[55vh] overflow-auto text-xs text-slate-200 space-y-2"></div>
-    </div>
-
-    <p class="text-[0.70rem] text-slate-500">Logs locais (demo): armazenados no navegador via localStorage. Em produção, enviar para backend.</p>
-  </div>
-</div>
 
 </body>
 </html>
