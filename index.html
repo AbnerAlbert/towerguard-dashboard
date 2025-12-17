@@ -2518,5 +2518,87 @@ Este parecer foi gerado pelo ARGUS em modo demonstração.
 })();
 </script>
 
+
+<script>
+/* ===================== DEMO START GATING (fields only after start) ===================== */
+(function(){
+  window.__TG_DEMO_STARTED__ = false;
+
+  // Hard reset UI to "not started" state
+  function resetNotStartedUI(){
+    const setText = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent = txt; };
+
+    // Key labels already exist in this layout
+    setText('humidityLabel', '--%');
+    setText('windLabel', '-- km/h');
+
+    // Optional labels (only if present)
+    setText('rainLabel', '--%');
+    setText('tempLabel', '--°C');
+
+    // Sensor / protection fields
+    setText('cuValueLabel', '-- mV');
+    setText('zincLevelLabel', '--%');
+
+    // Progress bars (best-effort)
+    const zb = document.getElementById('zincBar'); if(zb) zb.style.width = '0%';
+    const cdb = document.getElementById('cuDamageBar'); if(cdb) cdb.style.width = '0%';
+    const cbb = document.getElementById('cuBatteryBar'); if(cbb) cbb.style.width = '0%';
+
+    // Timeline clear (if desired)
+    const tl = document.getElementById('timelineList');
+    if(tl) tl.innerHTML = '';
+
+    // Chart clear
+    if(window.mainChart && window.mainChart.data){
+      window.mainChart.data.labels = [];
+      window.mainChart.data.datasets.forEach(ds => ds.data = []);
+      window.mainChart.update();
+    }
+  }
+
+  // Gate simulation steps until user starts
+  const _step = window.stepSimulation;
+  if(typeof _step === 'function'){
+    window.stepSimulation = function(){
+      if(!window.__TG_DEMO_STARTED__) return; // do nothing before start
+      return _step.apply(this, arguments);
+    };
+  }
+
+  // Ensure any pre-seeding loop won't populate before start
+  // (seeding calls stepSimulation which is now gated)
+
+  // When user clicks "Iniciar Simulação", enable demo and seed initial history for nicer graph
+  function hookStart(){
+    const btn = document.getElementById('btnSim');
+    if(!btn) return;
+
+    btn.addEventListener('click', function(){
+      // If we are transitioning from "not started" to started, enable and seed once
+      if(!window.__TG_DEMO_STARTED__ && !window.simInterval){
+        window.__TG_DEMO_STARTED__ = true;
+
+        // Seed a short history so the chart doesn't look empty after start
+        // (uses the real stepSimulation underneath)
+        if(typeof _step === 'function'){
+          for(let i=0;i<12;i++){ _step(); }
+        }
+      } else if(window.simInterval === null){
+        // If paused -> resumed, keep started=true
+        window.__TG_DEMO_STARTED__ = true;
+      }
+    }, true); // capture = true, runs before the original handler
+  }
+
+  // Run after initial load/initializers
+  setTimeout(()=>{
+    resetNotStartedUI();
+    hookStart();
+  }, 900);
+
+})();
+</script>
+
 </body>
 </html>
